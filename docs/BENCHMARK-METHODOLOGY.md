@@ -54,9 +54,10 @@ is INCONCLUSIVE.
 | Control | How |
 |---|---|
 | Same replicas, CPU/memory limits, JVM, JVM flags | one `aggregator` Deployment template; `jvmOpts` identical; one Dockerfile |
+| Same build of the aggregators | a set of compared runs uses one build for every variant: JVM (`Dockerfile.jvm`, `jvmOpts`) or native (Oracle GraalVM 25, `--gc=G1`, `Dockerfile.native`, `nativeOpts`); recorded per run in `environment.txt` (ADR 0005) |
 | Same partitions, payloads, order, distribution, seed | same generator, same seed, same topic settings |
 | Same downstream behaviour | same `ActionExecutor` code and settings; persistence and ML simulator redeployed fresh every run |
-| Same group membership timing | session timeout 10 s, heartbeat 1 s for classic (client), consumer and streams (group configs) — verified by every pod against the broker at startup |
+| Same group membership timing | session timeout 10 s, heartbeat 250 ms (1 s for runs before 2026-10-27, ADR 0003) for classic (client), consumer and streams (group configs) — verified by every pod against the broker at startup |
 | Same commit cadence | Streams `commit.interval.ms=100`; consumer loops commit every 100 ms |
 | Same poll size | `max.poll.records=500` for every consumer |
 | Same back-pressure | consumption pauses at 20,000 not-yet-durable business actions (not Kafka records, because one intent is one action but one fragment can be up to three) |

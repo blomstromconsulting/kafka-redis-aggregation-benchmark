@@ -1,7 +1,8 @@
 # Implementation
 
-Maven multi-module project, Java 21, Quarkus 3.40.1 (JVM mode), Kafka clients/Streams 4.2.2 used directly
-(no Quarkus Kafka extension, so every Kafka setting is visible in code).
+Maven multi-module project, Java 25, Quarkus 3.40.1 (JVM mode; the aggregators can also be built as native
+executables, ADR 0005), Kafka clients/Streams 4.2.2 created directly in code, so every Kafka setting is visible
+there (the Quarkus Kafka extensions are present only for native-image support).
 
 | Module | Kind | Responsibility |
 |---|---|---|

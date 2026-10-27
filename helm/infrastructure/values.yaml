@@ -16,8 +16,9 @@ kafka:
     limits: {memory: 2Gi}
   # Group membership timing, identical for classic, consumer and streams groups (fairness control).
   # Classic groups get the same values from the client side (session.timeout.ms / heartbeat.interval.ms).
+  # The heartbeat also paces partition moves: a new owner learns of its assignment on its next heartbeat (ADR 0003).
   groupSessionTimeoutMs: 10000
-  groupHeartbeatIntervalMs: 1000
+  groupHeartbeatIntervalMs: 250
   # Extra broker configs as KAFKA_* environment variables (see the apache/kafka image documentation).
   extraEnv: {}
 

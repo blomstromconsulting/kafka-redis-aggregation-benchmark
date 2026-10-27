@@ -8,5 +8,6 @@ benchmark must pin Kafka 4.2.2 and make every setting reviewable.
 **Decision.** Quarkus provides CDI, HTTP (health, metrics, status) and configuration; `KafkaStreams`,
 `KafkaConsumer` and `KafkaProducer` are created explicitly from `Properties` built in one class per variant.
 
-**Consequences.** Kafka 4.2.2 is used regardless of the Quarkus BOM (which manages 4.2.1 in 3.40.1); JVM mode only
-(no native image), as required.
+**Consequences.** Kafka 4.2.2 is used regardless of the Quarkus BOM (which manages 4.2.1 in 3.40.1). Native
+executables were out of scope at first; ADR 0005 adds them as a second build, using the Quarkus Kafka extensions
+for native-image support only.

@@ -1,0 +1,319 @@
+{
+  "runId" : "steady-a2-r1-1027124408",
+  "variant" : "a2",
+  "scenario" : "steady",
+  "repetition" : 1,
+  "runStatus" : "COMPLETED",
+  "sloMs" : 500,
+  "config" : {
+    "plan" : {
+      "seed" : 42,
+      "eventRate" : 6000.0,
+      "partitions" : 12,
+      "rampSeconds" : 30,
+      "payloadSizeA" : 200,
+      "payloadSizeB" : 200,
+      "payloadSizeC" : 400,
+      "stalePercent" : 0.0,
+      "warmupSeconds" : 60,
+      "missingPercent" : 1.0,
+      "durationSeconds" : 300,
+      "duplicatePercent" : 2.0,
+      "inferencePercent" : 100.0,
+      "outOfOrderPercent" : 10.0,
+      "hotTrafficFraction" : 0.0,
+      "windowDistribution" : "uniform",
+      "correlationWindowMs" : 1000,
+      "duplicateDelayMaxMs" : 2000,
+      "hotPartitionFraction" : 0.0
+    },
+    "variant" : "a2",
+    "scenario" : "steady",
+    "lagGroups" : "aggbench-a2-steady-a2-r1-1027124408:aggbench.steady-a2-r1-1027124408.ingress,aggbench-a2-steady-a2-r1-1027124408-intents:aggbench.steady-a2-r1-1027124408.actions",
+    "ingressTopic" : "aggbench.steady-a2-r1-1027124408.ingress"
+  },
+  "correctness" : {
+    "finalAggregates" : {
+      "expected" : 683731,
+      "observed" : 683731,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "inference_presence_mismatch" : 0,
+      "persisted_for_incomplete" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0,
+      "wrong_inference_score" : 0
+    },
+    "individualActions" : {
+      "expected" : 2065125,
+      "observed" : 2065125,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "duplicate_attempts" : 0,
+      "unexpected" : 0
+    },
+    "stage2Actions" : {
+      "expected" : 686058,
+      "observed" : 686058,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "persisted_without_a_and_b" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0
+    },
+    "rejectedInconsistentDuplicates" : 0,
+    "incompleteInputSequences" : {
+      "mask_3" : 2327,
+      "mask_5" : 2319,
+      "mask_6" : 2320
+    },
+    "inputVariations" : {
+      "with_duplicate" : 14049,
+      "with_stale_version" : 0,
+      "out_of_order" : 69454,
+      "requires_inference" : 690697
+    },
+    "sendFailures" : 0,
+    "failures" : [ ],
+    "status" : "PASS"
+  },
+  "load" : {
+    "requestedRate" : 6000.0,
+    "achievedRateMeasure" : 6000.87,
+    "maxScheduleLagMsMeasure" : 48,
+    "eventsSent" : 2079174,
+    "eventsAcked" : 2079174,
+    "sendFailures" : 0,
+    "drained" : true,
+    "loadAchieved" : true
+  },
+  "samples" : 3434914,
+  "faults" : 0,
+  "latency" : {
+    "measure" : {
+      "INDIVIDUAL" : {
+        "count" : 1788027,
+        "p50" : 71.99,
+        "p95" : 133.02,
+        "p99" : 196.0,
+        "p99_9" : 406.37,
+        "p99_95" : 458.14,
+        "p99_99" : 539.39,
+        "max" : 594.08,
+        "overSlo" : 451,
+        "overSloFraction" : 2.522333275727939E-4
+      },
+      "STAGE2" : {
+        "count" : 594007,
+        "p50" : 72.02,
+        "p95" : 133.11,
+        "p99" : 195.98,
+        "p99_9" : 407.8,
+        "p99_95" : 459.64,
+        "p99_99" : 546.08,
+        "max" : 594.08,
+        "overSlo" : 160,
+        "overSloFraction" : 2.693570951184077E-4
+      },
+      "FINAL" : {
+        "count" : 591986,
+        "p50" : 122.52,
+        "p95" : 183.86,
+        "p99" : 247.57,
+        "p99_9" : 447.04,
+        "p99_95" : 491.01,
+        "p99_99" : 581.67,
+        "max" : 667.72,
+        "overSlo" : 256,
+        "overSloFraction" : 4.3244265911693855E-4
+      },
+      "ALL" : {
+        "count" : 2974020,
+        "p50" : 81.69,
+        "p95" : 161.27,
+        "p99" : 214.75,
+        "p99_9" : 416.26,
+        "p99_95" : 464.72,
+        "p99_99" : 548.39,
+        "max" : 667.72,
+        "overSlo" : 867,
+        "overSloFraction" : 2.9152460306252145E-4
+      }
+    },
+    "steady" : {
+      "INDIVIDUAL" : {
+        "count" : 1788027,
+        "p50" : 71.99,
+        "p95" : 133.02,
+        "p99" : 196.0,
+        "p99_9" : 406.37,
+        "p99_95" : 458.14,
+        "p99_99" : 539.39,
+        "max" : 594.08,
+        "overSlo" : 451,
+        "overSloFraction" : 2.522333275727939E-4
+      },
+      "STAGE2" : {
+        "count" : 594007,
+        "p50" : 72.02,
+        "p95" : 133.11,
+        "p99" : 195.98,
+        "p99_9" : 407.8,
+        "p99_95" : 459.64,
+        "p99_99" : 546.08,
+        "max" : 594.08,
+        "overSlo" : 160,
+        "overSloFraction" : 2.693570951184077E-4
+      },
+      "FINAL" : {
+        "count" : 591986,
+        "p50" : 122.52,
+        "p95" : 183.86,
+        "p99" : 247.57,
+        "p99_9" : 447.04,
+        "p99_95" : 491.01,
+        "p99_99" : 581.67,
+        "max" : 667.72,
+        "overSlo" : 256,
+        "overSloFraction" : 4.3244265911693855E-4
+      },
+      "ALL" : {
+        "count" : 2974020,
+        "p50" : 81.69,
+        "p95" : 161.27,
+        "p99" : 214.75,
+        "p99_9" : 416.26,
+        "p99_95" : 464.72,
+        "p99_99" : 548.39,
+        "max" : 667.72,
+        "overSlo" : 867,
+        "overSloFraction" : 2.9152460306252145E-4
+      }
+    },
+    "failure" : { },
+    "aggregationOnly" : {
+      "STAGE2" : {
+        "count" : 594007,
+        "p50" : 63.12,
+        "p95" : 115.23,
+        "p99" : 160.85,
+        "p99_9" : 203.52,
+        "p99_95" : 219.01,
+        "p99_99" : 244.72,
+        "max" : 301.0,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      },
+      "FINAL" : {
+        "count" : 591986,
+        "p50" : 63.01,
+        "p95" : 115.25,
+        "p99" : 160.62,
+        "p99_9" : 203.73,
+        "p99_95" : 218.82,
+        "p99_99" : 243.82,
+        "max" : 292.77,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      }
+    },
+    "aggregationOnlySteady" : {
+      "STAGE2" : {
+        "count" : 594007,
+        "p50" : 63.12,
+        "p95" : 115.23,
+        "p99" : 160.85,
+        "p99_9" : 203.52,
+        "p99_95" : 219.01,
+        "p99_99" : 244.72,
+        "max" : 301.0,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      },
+      "FINAL" : {
+        "count" : 591986,
+        "p50" : 63.01,
+        "p95" : 115.25,
+        "p99" : 160.62,
+        "p99_9" : 203.73,
+        "p99_95" : 218.82,
+        "p99_99" : 243.82,
+        "max" : 292.77,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      }
+    },
+    "firstFragmentToFinal" : {
+      "FINAL" : {
+        "count" : 591986,
+        "p50" : 831.37,
+        "p95" : 1106.78,
+        "p99" : 1155.87,
+        "p99_9" : 1277.91,
+        "p99_95" : 1336.33,
+        "p99_99" : 1441.15,
+        "max" : 1643.72,
+        "overSlo" : 507620,
+        "overSloFraction" : 0.8574864946130483
+      }
+    }
+  },
+  "throughput" : {
+    "individualActionsPerSecondMean" : 5960.09,
+    "individualActionsPerSecondMedian" : 5958,
+    "individualActionsPerSecondMin" : 3939,
+    "producerAckedPerSecondMeasure" : 6000.87,
+    "producerMaxScheduleLagMsMeasure" : 48,
+    "producerRequestedRateMeasure" : 6000.0,
+    "producerAchievedRateWholeRun" : 5736.587659569912
+  },
+  "lag" : {
+    "aggbench-a2-steady-a2-r1-1027124408" : {
+      "maxOldestUnprocessedAgeMs" : 213,
+      "medianLag" : 356,
+      "p95Lag" : 530,
+      "maxLag" : 945
+    },
+    "aggbench-a2-steady-a2-r1-1027124408-intents" : {
+      "maxOldestUnprocessedAgeMs" : 524,
+      "medianLag" : 1655,
+      "p95Lag" : 2154,
+      "maxLag" : 5109
+    }
+  },
+  "events" : {
+    "DRAINED" : {
+      "count" : 1
+    },
+    "MEASURE_END" : {
+      "count" : 1
+    },
+    "MEASURE_START" : {
+      "count" : 1
+    },
+    "PARTITION_PROCESSING_STARTED" : {
+      "count" : 12,
+      "maxMsSinceAssignment" : 11470,
+      "maxFirstRecordAgeMs" : 272
+    },
+    "SEND_END" : {
+      "count" : 1
+    },
+    "TASK_PROCESSING_STARTED" : {
+      "count" : 12,
+      "maxMsSinceTaskInit" : 10539,
+      "maxFirstRecordAgeMs" : 56
+    },
+    "WARMUP_START" : {
+      "count" : 1
+    }
+  },
+  "faultRecovery" : [ ],
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "PASS",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "overall" : "PASS"
+  }
+}

@@ -20,6 +20,10 @@ jvmOpts: "-XX:+UseG1GC -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
 jsonLogs: "true"
 
 aggregator:
+  # jvm: JRE image (tag <images.tag>, options jvmOpts). native: Oracle GraalVM native executable with G1 GC
+  # (tag <images.tag>-native, options nativeOpts). Both come from scripts/build.sh [--native].
+  build: jvm
+  nativeOpts: "-XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
   replicas: 3
   # Identical resources for A1, A2 and B. Requests are kept low so the stack schedules on a shared laptop
   # cluster; the limits are what bound each pod.
@@ -30,7 +34,7 @@ aggregator:
   stateDirSizeLimit: 8Gi
   # Group membership timing (same for every protocol; verified at startup against the broker's group configs).
   groupSessionTimeoutMs: 10000
-  groupHeartbeatIntervalMs: 1000
+  groupHeartbeatIntervalMs: 250
   maxPollRecords: 500
   # Back-pressure: pause consumption at this many not-yet-durable business actions (all variants).
   maxInFlightActions: 20000

@@ -1,0 +1,18 @@
+# Runtime image for a native aggregator executable (Oracle GraalVM Native Image, G1 GC). Build from the repository
+# root after the native build has produced <module>/target/*-runner (scripts/build.sh --native does both):
+#   docker build -f docker/Dockerfile.native --build-arg MODULE=redis-aggregator -t aggbench/redis-aggregator:local-native .
+# Oracle Linux 10 matches the C library of the Oracle GraalVM 25 build image (glibc 2.39) and has libstdc++ for
+# RocksDB. Same user, state directory and option handling as Dockerfile.jvm.
+FROM oraclelinux:10-slim@sha256:325a9aff8b4106c0bfa45b447740f15f792932aa3e41fa76c2538465ec586185
+
+ARG MODULE
+WORKDIR /deployments
+COPY --chown=185:0 ${MODULE}/target/*-runner /deployments/application
+
+# Kafka Streams state directory (mounted as an emptyDir in Kubernetes: ephemeral, lost with the pod).
+RUN mkdir -p /var/lib/kafka-streams && chown 185:0 /var/lib/kafka-streams
+USER 185
+
+# Runtime options only: the garbage collector is chosen when the executable is built (--gc=G1).
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+ENTRYPOINT ["sh", "-c", "exec /deployments/application $JAVA_OPTS"]

@@ -96,5 +96,5 @@ against the same fixtures.
 - Rolling updates `maxSurge: 1, maxUnavailable: 0`, `terminationGracePeriodSeconds: 45`, startup/readiness/
   liveness probes. Readiness = joined the group and running; per-task restoration is exposed separately
   (`/status`, metrics), never inferred from readiness.
-- Group membership timing is the same for all protocols: session timeout 10 s, heartbeat 1 s.
+- Group membership timing is the same for all protocols: session timeout 10 s, heartbeat 250 ms (ADR 0003).
 - Downstream services (persistence, ML simulator) are redeployed with every run, identical for all variants.

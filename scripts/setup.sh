@@ -10,7 +10,7 @@ for tool in docker kubectl helm mvn python3 jq nc; do
     log "MISSING: $tool"; missing=1
   fi
 done
-JAVA="$(java21_home)/bin/java"
+JAVA="$(java25_home)/bin/java"
 "$JAVA" -version 2>&1 | head -1 | sed 's/^/java: /' >&2
 [[ $missing -eq 0 ]] || die "install the missing tools first (see README.md)"
 

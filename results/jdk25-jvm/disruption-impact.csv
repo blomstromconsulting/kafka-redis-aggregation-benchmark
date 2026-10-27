@@ -1,0 +1,7 @@
+run,scenario,variant,repetition,faults,impact_s,baseline_late_events_per_min,late_events,baseline_events,excess_events,excess_aggregates,excess_actions,events_over_2s,events_over_10s,aggregation_only_late_aggregates
+steady-a1-r1-1027123643,steady,a1,1,0,0.0,16730.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+steady-a2-r1-1027124408,steady,a2,1,0,0.0,90.2,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+steady-b-r1-1027125129,steady,b,1,0,0.0,3431.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+rolling-a1-r1-1027113104,rolling,a1,1,1,120.0,0.0,74921.0,0.0,74921.0,24702.0,124554.0,38916.0,0.0,19418.0
+rolling-a2-r1-1027113825,rolling,a2,1,1,120.0,998.7,89799.0,1997.3,87801.7,28904.3,145909.0,15341.0,0.0,20329.0
+rolling-b-r1-1027114547,rolling,b,1,1,120.0,14.3,20805.0,28.7,20776.3,7487.3,35227.7,299.0,0.0,4468.0

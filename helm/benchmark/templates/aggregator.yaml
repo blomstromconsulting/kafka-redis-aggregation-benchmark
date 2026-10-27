@@ -3,6 +3,8 @@
 # JVM options are identical for all variants.
 {{- $streams := eq (include "bench.isStreams" .) "true" }}
 {{- $a := .Values.aggregator }}
+{{- if not (has $a.build (list "jvm" "native")) }}{{ fail "aggregator.build must be jvm or native" }}{{ end }}
+{{- $native := eq $a.build "native" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,14 +29,14 @@ spec:
       terminationGracePeriodSeconds: {{ $a.terminationGracePeriodSeconds }}
       containers:
         - name: aggregator
-          image: "{{ .Values.images.registry }}/{{ if $streams }}streams-aggregator{{ else }}redis-aggregator{{ end }}:{{ .Values.images.tag }}"
+          image: "{{ .Values.images.registry }}/{{ if $streams }}streams-aggregator{{ else }}redis-aggregator{{ end }}:{{ .Values.images.tag }}{{ if $native }}-native{{ end }}"
           imagePullPolicy: {{ .Values.images.pullPolicy }}
           env:
             - name: POD_NAME
               valueFrom: {fieldRef: {fieldPath: metadata.name}}
             - {name: RUN_ID, value: {{ .Values.runId | quote }}}
             - {name: VARIANT, value: {{ .Values.variant | quote }}}
-            - {name: JAVA_OPTS, value: {{ .Values.jvmOpts | quote }}}
+            - {name: JAVA_OPTS, value: {{ if $native }}{{ $a.nativeOpts | quote }}{{ else }}{{ .Values.jvmOpts | quote }}{{ end }}}
             - {name: JSON_LOGS, value: {{ .Values.jsonLogs | quote }}}
             - {name: KAFKA_BOOTSTRAP, value: {{ .Values.kafka.bootstrapServers | quote }}}
             - {name: INGRESS_TOPIC, value: {{ include "bench.ingressTopic" . | quote }}}

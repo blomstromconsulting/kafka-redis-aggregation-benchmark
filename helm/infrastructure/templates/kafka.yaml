@@ -77,11 +77,11 @@ spec:
             - {name: KAFKA_GROUP_CONSUMER_SESSION_TIMEOUT_MS, value: {{ .Values.kafka.groupSessionTimeoutMs | quote }}}
             - {name: KAFKA_GROUP_CONSUMER_MIN_SESSION_TIMEOUT_MS, value: "6000"}
             - {name: KAFKA_GROUP_CONSUMER_HEARTBEAT_INTERVAL_MS, value: {{ .Values.kafka.groupHeartbeatIntervalMs | quote }}}
-            - {name: KAFKA_GROUP_CONSUMER_MIN_HEARTBEAT_INTERVAL_MS, value: "1000"}
+            - {name: KAFKA_GROUP_CONSUMER_MIN_HEARTBEAT_INTERVAL_MS, value: {{ .Values.kafka.groupHeartbeatIntervalMs | quote }}}
             - {name: KAFKA_GROUP_STREAMS_SESSION_TIMEOUT_MS, value: {{ .Values.kafka.groupSessionTimeoutMs | quote }}}
             - {name: KAFKA_GROUP_STREAMS_MIN_SESSION_TIMEOUT_MS, value: "6000"}
             - {name: KAFKA_GROUP_STREAMS_HEARTBEAT_INTERVAL_MS, value: {{ .Values.kafka.groupHeartbeatIntervalMs | quote }}}
-            - {name: KAFKA_GROUP_STREAMS_MIN_HEARTBEAT_INTERVAL_MS, value: "1000"}
+            - {name: KAFKA_GROUP_STREAMS_MIN_HEARTBEAT_INTERVAL_MS, value: {{ .Values.kafka.groupHeartbeatIntervalMs | quote }}}
             - {name: KAFKA_GROUP_STREAMS_MAX_STANDBY_REPLICAS, value: "2"}
             - {name: KAFKA_GROUP_STREAMS_INITIAL_REBALANCE_DELAY_MS, value: "0"}
             {{- range $k, $v := .Values.kafka.extraEnv }}

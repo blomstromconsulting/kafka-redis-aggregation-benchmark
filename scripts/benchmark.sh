@@ -14,6 +14,7 @@
 #   --payload-a B  --payload-b B  --payload-c B  --window-ms MS  --window-distribution uniform|fixed|exponential
 #   --inference-latency-ms MS  --inference-percent P  --ml-profile fixed|normal|lognormal-tail
 #   --fault F  --fault-at S  --fault-interval S  --fault-count N
+#   --build jvm|native  aggregator executable (default jvm; native = Oracle GraalVM native image, build.sh --native)
 #   --keep-db        keep raw per-action rows in PostgreSQL after verification (large)
 #   --dry-run        print the plan only
 #
@@ -23,7 +24,7 @@
 source "$(dirname "$0")/lib/common.sh"
 source "$ROOT/scenarios/suites.env"
 
-SCENARIOS=() VARIANTS=() REPETITIONS=3 REP_START=1 SEED=42 KEEP_DB=false DRY_RUN=false OVERRIDE_KEYS=""
+SCENARIOS=() VARIANTS=() REPETITIONS=3 REP_START=1 SEED=42 KEEP_DB=false DRY_RUN=false OVERRIDE_KEYS="" BUILD=jvm
 # Command-line overrides are kept as O_<KEY> variables (macOS ships bash 3.2: no associative arrays).
 override() { printf -v "O_$1" '%s' "$2"; OVERRIDE_KEYS="$OVERRIDE_KEYS $1"; }
 while [[ $# -gt 0 ]]; do
@@ -52,9 +53,10 @@ while [[ $# -gt 0 ]]; do
     --fault-at) override FAULT_AT "$2"; shift 2 ;;
     --fault-interval) override FAULT_INTERVAL "$2"; shift 2 ;;
     --fault-count) override FAULT_COUNT "$2"; shift 2 ;;
+    --build) BUILD="$2"; shift 2 ;;
     --keep-db) KEEP_DB=true; shift ;;
     --dry-run) DRY_RUN=true; shift ;;
-    -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,23p' "$0"; exit 0 ;;
     *) die "unknown option $1 (see --help)" ;;
   esac
 done
@@ -62,6 +64,12 @@ done
 [[ ${#VARIANTS[@]} -gt 0 ]] || die "no variant given (--variant or --all)"
 for v in "${VARIANTS[@]}"; do [[ "$v" =~ ^(a1|a2|b)$ ]] || die "unknown variant $v"; done
 for s in "${SCENARIOS[@]}"; do [[ -f "$ROOT/scenarios/$s.env" ]] || die "unknown scenario $s"; done
+[[ "$BUILD" =~ ^(jvm|native)$ ]] || die "unknown build $BUILD (jvm or native)"
+AGGREGATOR_TAG="$IMAGE_TAG"; [[ "$BUILD" == native ]] && AGGREGATOR_TAG="$IMAGE_TAG-native"
+for v in "${VARIANTS[@]}"; do
+  image="aggbench/$([[ "$v" == b ]] && echo redis-aggregator || echo streams-aggregator):$AGGREGATOR_TAG"
+  docker image inspect "$image" >/dev/null 2>&1 || die "image $image not found; run ./scripts/build.sh$([[ "$BUILD" == native ]] && echo ' --native')"
+done
 
 VERIFIER_JAR="$ROOT/correctness-verifier/target/correctness-verifier.jar"
 [[ -f "$VERIFIER_JAR" ]] || die "verifier not built; run ./scripts/build.sh"
@@ -148,6 +156,7 @@ variant: "$variant"
 images: {tag: "$IMAGE_TAG"}
 kafka: {partitions: $P_PARTITIONS, replicationFactor: $KAFKA_RF}
 aggregator:
+  build: "$BUILD"
   replicas: $P_REPLICAS
   groupSessionTimeoutMs: $GROUP_SESSION_TIMEOUT_MS
   groupHeartbeatIntervalMs: $GROUP_HEARTBEAT_INTERVAL_MS
@@ -224,7 +233,9 @@ run_one() {
   log "=== run $run_id: $P_DESCRIPTION [effective: rate=$P_EVENT_RATE warmup=$P_WARMUP_SECONDS duration=$P_DURATION_SECONDS fault=$P_FAULT@$P_FAULT_AT]"
   helm_values "$run_id" "$variant" "$scenario" "$rep" > "$out/values.yaml"
   cp "$ROOT/scenarios/$scenario.env" "$out/scenario.env"
-  echo "infraProfile=$INFRA_PROFILE seed=$SEED" > "$out/environment.txt"
+  echo "infraProfile=$INFRA_PROFILE seed=$SEED aggregatorBuild=$BUILD aggregatorImage=$(docker image inspect \
+    "aggbench/$([[ "$variant" == b ]] && echo redis-aggregator || echo streams-aggregator):$AGGREGATOR_TAG" \
+    --format '{{.Id}}')" > "$out/environment.txt"
   kubectl --context "$KUBE_CONTEXT" get nodes -o wide >> "$out/environment.txt"
 
   teardown_run "" "$variant"
@@ -267,7 +278,7 @@ run_one() {
 
   pg_pid=$(port_forward svc/postgres 15432 5432)
   local verify_status=0
-  "$(java21_home)/bin/java" -jar "$VERIFIER_JAR" --jdbc-url "jdbc:postgresql://localhost:15432/aggbench" \
+  "$(java25_home)/bin/java" -jar "$VERIFIER_JAR" --jdbc-url "jdbc:postgresql://localhost:15432/aggbench" \
     --user "$(secret_value user)" --password "$(secret_value password)" --run-id "$run_id" --out "$out" \
     > "$out/verifier.log" 2>&1 || verify_status=$?
   kill "$pg_pid" 2>/dev/null || true
@@ -284,7 +295,7 @@ run_one() {
 }
 
 mkdir -p "$RESULTS_DIR/runs"
-log "plan: scenarios=[${SCENARIOS[*]}] variants=[${VARIANTS[*]}] repetitions=$REPETITIONS seed=$SEED profile=$INFRA_PROFILE"
+log "plan: scenarios=[${SCENARIOS[*]}] variants=[${VARIANTS[*]}] repetitions=$REPETITIONS seed=$SEED profile=$INFRA_PROFILE build=$BUILD"
 for scenario in "${SCENARIOS[@]}"; do
   for rep in $(seq "$REP_START" $((REP_START + REPETITIONS - 1))); do
     n=${#VARIANTS[@]}

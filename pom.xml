@@ -22,7 +22,7 @@
     </modules>
 
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Pinned versions. Kafka is deliberately pinned above the Quarkus-managed 4.2.1. -->
@@ -100,7 +100,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${compiler-plugin.version}</version>
                     <configuration>
-                        <release>21</release>
+                        <release>${maven.compiler.release}</release>
                         <parameters>true</parameters>
                     </configuration>
                 </plugin>

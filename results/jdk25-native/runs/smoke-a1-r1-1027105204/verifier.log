@@ -1,0 +1,13 @@
+{
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "INCONCLUSIVE",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "reason" : "insufficient data or the run did not drain",
+    "overall" : "INCONCLUSIVE"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ],
+  "runId" : "smoke-a1-r1-1027105204"
+}

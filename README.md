@@ -9,15 +9,15 @@ at 6,000 fragments/s with a 500 ms p99.95 end-to-end SLO, under frequent Kuberne
 | **A2** | identical code to A1 | `group.protocol=classic` (client-side HA assignor) | changelog restore; 1 standby (client config) + warmups |
 | **B** | Redis 7.4 (atomic Lua function) | `group.protocol=consumer` (KIP-848) | stateless pods; Kafka replay after Redis loss |
 
-All three run on Java 21 / Quarkus 3.40, execute the same individual, cumulative (A+B) and final (A+B+C, ML
-inference, persistence) actions through the same idempotent downstream services, and are verified by an
-independent checker. Nothing in this repository assumes a winner: results come only from `results/`.
+All three run on Java 25 / Quarkus 3.40 (on the JVM, or optionally as native executables), execute the same
+individual, cumulative (A+B) and final (A+B+C, ML inference, persistence) actions through the same idempotent
+downstream services, and are verified by an independent checker. Nothing in this repository assumes a winner: results come only from `results/`.
 
 ## Prerequisites
 
 - macOS with [OrbStack](https://orbstack.dev) and its Kubernetes enabled (context `orbstack`); ≥ 8 CPUs and
   ≥ 14 GiB assigned to OrbStack recommended
-- Docker CLI, `kubectl`, Helm ≥ 3.14, JDK 21, Maven ≥ 3.9, Python 3.10+, `jq`
+- Docker CLI, `kubectl`, Helm ≥ 3.14, JDK 25, Maven ≥ 3.9, Python 3.10+, `jq`
 
 ## Quick start (smoke test)
 
@@ -44,7 +44,17 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 ./scripts/verify-run.sh <run-id>  # re-run the independent verifier (raw rows are kept if verification failed)
 ./scripts/analysis/window_sensitivity.py results/runs/<run>  # steady/failure split under two window rules
 ./scripts/analysis/disruption_impact.py --summary results/runs/<run> ...  # late events per rollout / pod failure
+./scripts/analysis/late_event_causes.py results/runs/<b-run> ...  # B: late events by pod and stage
 ./scripts/cleanup.sh            # remove the current run; --all also removes infrastructure and volumes
+```
+
+Native aggregators (ADR 0005): `./scripts/build.sh --native` additionally compiles A and B into native executables
+with Oracle GraalVM 25 and the G1 collector (images tagged `local-native`); run them with `--build native`, into a
+separate results directory so that JVM and native runs are never mixed:
+
+```bash
+AGGBENCH_RESULTS=$PWD/results/native ./scripts/benchmark.sh --scenario rolling --all --build native
+AGGBENCH_RESULTS=$PWD/results/native ./scripts/report.sh
 ```
 
 Scenarios live in `scenarios/*.env` (S1–S10, see `docs/BENCHMARK-METHODOLOGY.md`). Every option can be
@@ -88,5 +98,6 @@ Live view: `kubectl -n aggbench port-forward svc/grafana 3000` → http://localh
 
 ## Pinned versions
 
-Kafka brokers and clients 4.2.2 · Quarkus 3.40.1 · Java 21 (Eclipse Temurin 21.0.8 JRE images) · Redis 7.4.6 ·
+Kafka brokers and clients 4.2.2 · Quarkus 3.40.1 · Java 25 (Eclipse Temurin 25.0.4.1 JRE images; native
+aggregators: Oracle GraalVM 25.0.5, G1) · Redis 7.4.6 ·
 PostgreSQL 17.6 · Lettuce 6.8.2 · Prometheus 3.7.2 · Grafana 12.2.1 · Helm charts in `helm/`.

@@ -1,0 +1,3 @@
+infraProfile=local seed=42 aggregatorBuild=jvm aggregatorImage=sha256:6d15a9f7d04d532b167d393dc1d2595d0e453130d831cb1310cb9b291793b397
+NAME       STATUS   ROLES                  AGE    VERSION        INTERNAL-IP     EXTERNAL-IP   OS-IMAGE   KERNEL-VERSION                                CONTAINER-RUNTIME
+orbstack   Ready    control-plane,master   160d   v1.36.5+orb1   192.168.139.2   <none>        OrbStack   7.2.12-orbstack-00394-gbecdd6130068 (arm64)   docker://29.8.2

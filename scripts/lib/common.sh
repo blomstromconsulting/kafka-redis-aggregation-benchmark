@@ -10,6 +10,9 @@ INFRA_RELEASE="aggbench-infra"
 BENCH_RELEASE="aggbench-run"
 IMAGE_TAG="${AGGBENCH_IMAGE_TAG:-local}"
 MODULES_WITH_IMAGES=(streams-aggregator redis-aggregator load-generator ml-simulator persistence-service)
+# Native builds (build.sh --native): the systems under test only, built with Oracle GraalVM 25 (pinned digest).
+NATIVE_MODULES=(streams-aggregator redis-aggregator)
+NATIVE_BUILDER_IMAGE="container-registry.oracle.com/graalvm/native-image:25@sha256:d2d08cc7eb65b37c838c35e5658dab17216b7c07c324ac58c36f326501354573"
 
 log() { printf '%s %s\n' "$(date '+%H:%M:%S')" "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
@@ -17,14 +20,19 @@ die() { log "ERROR: $*"; exit 1; }
 k() { kubectl --context "$KUBE_CONTEXT" -n "$NAMESPACE" "$@"; }
 h() { helm --kube-context "$KUBE_CONTEXT" -n "$NAMESPACE" "$@"; }
 
-java21_home() {
-  if [[ -n "${JAVA_HOME:-}" ]] && "$JAVA_HOME/bin/java" -version 2>&1 | grep -q '"21'; then
-    echo "$JAVA_HOME"
-  elif command -v /usr/libexec/java_home >/dev/null && /usr/libexec/java_home -v 21 >/dev/null 2>&1; then
-    /usr/libexec/java_home -v 21
-  else
-    die "Java 21 not found (set JAVA_HOME to a JDK 21)"
-  fi
+# A JDK 25 for Maven and the verifier. macOS java_home falls back to another version without failing, so every
+# candidate is checked by running it.
+java25_home() {
+  local candidate
+  for candidate in "${JAVA_HOME:-}" \
+                   "$(/usr/libexec/java_home -v 25 2>/dev/null || true)" \
+                   "$(brew --prefix openjdk 2>/dev/null || true)/libexec/openjdk.jdk/Contents/Home"; do
+    if [[ -n "$candidate" && -x "$candidate/bin/java" ]] && "$candidate/bin/java" -version 2>&1 | grep -q '"25'; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+  die "Java 25 not found (set JAVA_HOME to a JDK 25)"
 }
 
 # Runs a Kafka CLI tool inside the first broker, e.g. kafka_tool kafka-topics.sh --list

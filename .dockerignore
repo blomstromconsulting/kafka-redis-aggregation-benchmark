@@ -1,2 +1,4 @@
 *
 !*/target/quarkus-app/
+# Native executables (scripts/build.sh --native)
+!*/target/*-runner
