@@ -1,0 +1,72 @@
+# Local lightweight profile (default): one Kafka broker, one Redis node, one PostgreSQL.
+# It does NOT test broker or Redis high-availability failover. See values-ha.yaml for the higher-fidelity profile.
+profile: local
+
+kafka:
+  image: apache/kafka:4.2.2
+  brokers: 1
+  # KRaft cluster id (base64 UUID); fixed so that re-installs keep using the same PVC data.
+  clusterId: m6yLWr9CRHSOS1GgDrn8Fw
+  replicationFactor: 1
+  minInsyncReplicas: 1
+  heapOpts: "-Xms1g -Xmx1g"
+  storage: 30Gi
+  resources:
+    requests: {cpu: 500m, memory: 1536Mi}
+    limits: {memory: 2Gi}
+  # Group membership timing, identical for classic, consumer and streams groups (fairness control).
+  # Classic groups get the same values from the client side (session.timeout.ms / heartbeat.interval.ms).
+  groupSessionTimeoutMs: 10000
+  groupHeartbeatIntervalMs: 1000
+  # Extra broker configs as KAFKA_* environment variables (see the apache/kafka image documentation).
+  extraEnv: {}
+
+redis:
+  image: redis:7.4.6-alpine
+  # standalone: one node with AOF (appendfsync everysec). sentinel: primary + replica + 3 sentinels.
+  mode: standalone
+  replicas: 2
+  maxmemory: 2gb
+  appendfsync: everysec
+  storage: 10Gi
+  resources:
+    requests: {cpu: 250m, memory: 256Mi}
+    limits: {memory: 2560Mi}
+  exporter:
+    image: oliver006/redis_exporter:v1.79.0
+  sentinel:
+    replicas: 3
+    masterName: aggbench
+    quorum: 2
+    downAfterMs: 5000
+    failoverTimeoutMs: 10000
+
+postgres:
+  image: postgres:17.6-alpine
+  database: aggbench
+  user: aggbench
+  # The password is generated on first install and kept in Secret "aggbench-postgres".
+  storage: 30Gi
+  resources:
+    requests: {cpu: 500m, memory: 768Mi}
+    limits: {memory: 2Gi}
+
+prometheus:
+  image: prom/prometheus:v3.7.2
+  scrapeInterval: 2s
+  retention: 3d
+  storage: 10Gi
+  # Full prometheus.yml; scripts/deploy.sh passes monitoring/prometheus/prometheus.yml with --set-file.
+  config: ""
+  resources:
+    requests: {cpu: 100m, memory: 384Mi}
+    limits: {memory: 1Gi}
+
+grafana:
+  enabled: true
+  image: grafana/grafana:12.2.1
+  # Dashboard JSON; scripts/deploy.sh passes monitoring/grafana/aggbench-dashboard.json with --set-file.
+  dashboard: ""
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {memory: 384Mi}

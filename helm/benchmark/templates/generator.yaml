@@ -1,0 +1,58 @@
+{{- if .Values.generator.enabled }}
+{{- $g := .Values.generator }}
+# Open-loop load generator + independent lag monitor for this run (runs once, then exits).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-generator-{{ .Values.runId }}
+  labels:
+    app: load-generator
+    {{- include "bench.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: load-generator
+        {{- include "bench.labels" . | nindent 8 }}
+      annotations: {{- include "bench.metricsAnnotations" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: load-generator
+          image: "{{ .Values.images.registry }}/load-generator:{{ .Values.images.tag }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            {{- include "bench.dbEnv" . | nindent 12 }}
+            - {name: JAVA_OPTS, value: {{ .Values.jvmOpts | quote }}}
+            - {name: JSON_LOGS, value: {{ .Values.jsonLogs | quote }}}
+            - {name: RUN_ID, value: {{ .Values.runId | quote }}}
+            - {name: VARIANT, value: {{ .Values.variant | quote }}}
+            - {name: SCENARIO, value: {{ $g.scenario | quote }}}
+            - {name: REPETITION, value: {{ $g.repetition | quote }}}
+            - {name: KAFKA_BOOTSTRAP, value: {{ .Values.kafka.bootstrapServers | quote }}}
+            - {name: INGRESS_TOPIC, value: {{ include "bench.ingressTopic" . | quote }}}
+            - {name: PARTITIONS, value: {{ .Values.kafka.partitions | quote }}}
+            - {name: LAG_GROUPS, value: {{ include "bench.lagGroups" . | quote }}}
+            - {name: SEED, value: {{ $g.seed | quote }}}
+            - {name: EVENT_RATE, value: {{ $g.eventRate | quote }}}
+            - {name: WARMUP_SECONDS, value: {{ $g.warmupSeconds | quote }}}
+            - {name: RAMP_SECONDS, value: {{ $g.rampSeconds | quote }}}
+            - {name: DURATION_SECONDS, value: {{ $g.durationSeconds | quote }}}
+            - {name: PAYLOAD_A, value: {{ $g.payloadSizeA | quote }}}
+            - {name: PAYLOAD_B, value: {{ $g.payloadSizeB | quote }}}
+            - {name: PAYLOAD_C, value: {{ $g.payloadSizeC | quote }}}
+            - {name: CORRELATION_WINDOW_MS, value: {{ $g.correlationWindowMs | quote }}}
+            - {name: WINDOW_DISTRIBUTION, value: {{ $g.windowDistribution | quote }}}
+            - {name: OUT_OF_ORDER_PERCENT, value: {{ $g.outOfOrderPercent | quote }}}
+            - {name: DUPLICATE_PERCENT, value: {{ $g.duplicatePercent | quote }}}
+            - {name: DUPLICATE_DELAY_MAX_MS, value: {{ $g.duplicateDelayMaxMs | quote }}}
+            - {name: MISSING_PERCENT, value: {{ $g.missingPercent | quote }}}
+            - {name: STALE_PERCENT, value: {{ $g.stalePercent | quote }}}
+            - {name: INFERENCE_PERCENT, value: {{ $g.inferencePercent | quote }}}
+            - {name: HOT_PARTITION_FRACTION, value: {{ $g.hotPartitionFraction | quote }}}
+            - {name: HOT_TRAFFIC_FRACTION, value: {{ $g.hotTrafficFraction | quote }}}
+            - {name: DRAIN_TIMEOUT_SECONDS, value: {{ $g.drainTimeoutSeconds | quote }}}
+          resources: {{- toYaml $g.resources | nindent 12 }}
+{{- end }}

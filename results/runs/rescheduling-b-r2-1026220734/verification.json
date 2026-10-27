@@ -1,0 +1,1253 @@
+{
+  "runId" : "rescheduling-b-r2-1026220734",
+  "variant" : "b",
+  "scenario" : "rescheduling",
+  "repetition" : 2,
+  "runStatus" : "COMPLETED",
+  "sloMs" : 500,
+  "config" : {
+    "plan" : {
+      "seed" : 42,
+      "eventRate" : 6000.0,
+      "partitions" : 12,
+      "rampSeconds" : 30,
+      "payloadSizeA" : 200,
+      "payloadSizeB" : 200,
+      "payloadSizeC" : 400,
+      "stalePercent" : 0.0,
+      "warmupSeconds" : 60,
+      "missingPercent" : 1.0,
+      "durationSeconds" : 330,
+      "duplicatePercent" : 2.0,
+      "inferencePercent" : 100.0,
+      "outOfOrderPercent" : 10.0,
+      "hotTrafficFraction" : 0.0,
+      "windowDistribution" : "uniform",
+      "correlationWindowMs" : 1000,
+      "duplicateDelayMaxMs" : 2000,
+      "hotPartitionFraction" : 0.0
+    },
+    "variant" : "b",
+    "scenario" : "rescheduling",
+    "lagGroups" : "aggbench-b-rescheduling-b-r2-1026220734:aggbench.rescheduling-b-r2-1026220734.ingress",
+    "ingressTopic" : "aggbench.rescheduling-b-r2-1026220734.ingress"
+  },
+  "correctness" : {
+    "finalAggregates" : {
+      "expected" : 742905,
+      "observed" : 742905,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "inference_presence_mismatch" : 0,
+      "persisted_for_incomplete" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0,
+      "wrong_inference_score" : 0
+    },
+    "individualActions" : {
+      "expected" : 2243901,
+      "observed" : 2243901,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "duplicate_attempts" : 0,
+      "unexpected" : 0
+    },
+    "stage2Actions" : {
+      "expected" : 745435,
+      "observed" : 745435,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "persisted_without_a_and_b" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0
+    },
+    "rejectedInconsistentDuplicates" : 0,
+    "incompleteInputSequences" : {
+      "mask_3" : 2530,
+      "mask_5" : 2546,
+      "mask_6" : 2517
+    },
+    "inputVariations" : {
+      "with_duplicate" : 15194,
+      "with_stale_version" : 0,
+      "out_of_order" : 75436,
+      "requires_inference" : 750498
+    },
+    "sendFailures" : 0,
+    "failures" : [ ],
+    "status" : "PASS"
+  },
+  "load" : {
+    "requestedRate" : 6000.0,
+    "achievedRateMeasure" : 6000.484848484848,
+    "maxScheduleLagMsMeasure" : 38,
+    "eventsSent" : 2259095,
+    "eventsAcked" : 2259095,
+    "sendFailures" : 0,
+    "drained" : true,
+    "loadAchieved" : true
+  },
+  "samples" : 3732241,
+  "faults" : 6,
+  "latency" : {
+    "measure" : {
+      "INDIVIDUAL" : {
+        "count" : 1966791,
+        "p50" : 12.22,
+        "p95" : 192.89,
+        "p99" : 956.08,
+        "p99_9" : 1492.2,
+        "p99_95" : 1599.96,
+        "p99_99" : 2021.72,
+        "max" : 2323.56,
+        "overSlo" : 47256,
+        "overSloFraction" : 0.024026955583994435
+      },
+      "STAGE2" : {
+        "count" : 653378,
+        "p50" : 12.33,
+        "p95" : 193.25,
+        "p99" : 953.21,
+        "p99_9" : 1488.61,
+        "p99_95" : 1600.26,
+        "p99_99" : 2035.72,
+        "max" : 2323.56,
+        "overSlo" : 15711,
+        "overSloFraction" : 0.024045805031696812
+      },
+      "FINAL" : {
+        "count" : 651160,
+        "p50" : 65.31,
+        "p95" : 247.9,
+        "p99" : 1126.29,
+        "p99_9" : 1804.87,
+        "p99_95" : 1939.13,
+        "p99_99" : 2257.66,
+        "max" : 2595.92,
+        "overSlo" : 17434,
+        "overSloFraction" : 0.026773757601818292
+      },
+      "ALL" : {
+        "count" : 3271329,
+        "p50" : 15.26,
+        "p95" : 205.97,
+        "p99" : 981.14,
+        "p99_9" : 1579.48,
+        "p99_95" : 1730.66,
+        "p99_99" : 2076.11,
+        "max" : 2595.92,
+        "overSlo" : 80401,
+        "overSloFraction" : 0.024577472947539057
+      }
+    },
+    "steady" : {
+      "INDIVIDUAL" : {
+        "count" : 267670,
+        "p50" : 8.97,
+        "p95" : 75.43,
+        "p99" : 337.66,
+        "p99_9" : 586.66,
+        "p99_95" : 608.66,
+        "p99_99" : 625.66,
+        "max" : 631.66,
+        "overSlo" : 753,
+        "overSloFraction" : 0.0028131654649381703
+      },
+      "STAGE2" : {
+        "count" : 88915,
+        "p50" : 9.06,
+        "p95" : 75.86,
+        "p99" : 337.43,
+        "p99_9" : 589.62,
+        "p99_95" : 610.62,
+        "p99_99" : 625.66,
+        "max" : 629.66,
+        "overSlo" : 248,
+        "overSloFraction" : 0.002789180678175786
+      },
+      "FINAL" : {
+        "count" : 88645,
+        "p50" : 61.07,
+        "p95" : 129.62,
+        "p99" : 322.92,
+        "p99_9" : 587.33,
+        "p99_95" : 611.94,
+        "p99_99" : 676.94,
+        "max" : 688.94,
+        "overSlo" : 242,
+        "overSloFraction" : 0.0027299904111907046
+      },
+      "ALL" : {
+        "count" : 445230,
+        "p50" : 11.07,
+        "p95" : 94.41,
+        "p99" : 335.24,
+        "p99_9" : 588.6,
+        "p99_95" : 608.66,
+        "p99_99" : 629.66,
+        "max" : 688.94,
+        "overSlo" : 1243,
+        "overSloFraction" : 0.002791815466163556
+      }
+    },
+    "failure" : {
+      "INDIVIDUAL" : {
+        "count" : 1699121,
+        "p50" : 12.77,
+        "p95" : 221.06,
+        "p99" : 999.33,
+        "p99_9" : 1513.97,
+        "p99_95" : 1616.26,
+        "p99_99" : 2059.9,
+        "max" : 2323.56,
+        "overSlo" : 46503,
+        "overSloFraction" : 0.0273688571914537
+      },
+      "STAGE2" : {
+        "count" : 564463,
+        "p50" : 12.89,
+        "p95" : 221.02,
+        "p99" : 997.61,
+        "p99_9" : 1508.07,
+        "p99_95" : 1620.48,
+        "p99_99" : 2074.72,
+        "max" : 2323.56,
+        "overSlo" : 15463,
+        "overSloFraction" : 0.02739417818351247
+      },
+      "FINAL" : {
+        "count" : 562515,
+        "p50" : 66.1,
+        "p95" : 277.05,
+        "p99" : 1195.64,
+        "p99_9" : 1833.9,
+        "p99_95" : 1951.97,
+        "p99_99" : 2283.66,
+        "max" : 2595.92,
+        "overSlo" : 17192,
+        "overSloFraction" : 0.03056274054914091
+      },
+      "ALL" : {
+        "count" : 2826099,
+        "p50" : 15.91,
+        "p95" : 234.77,
+        "p99" : 1033.03,
+        "p99_9" : 1605.26,
+        "p99_95" : 1759.07,
+        "p99_99" : 2098.56,
+        "max" : 2595.92,
+        "overSlo" : 79158,
+        "overSloFraction" : 0.028009634482019208
+      }
+    },
+    "aggregationOnly" : {
+      "STAGE2" : {
+        "count" : 653378,
+        "p50" : 3.32,
+        "p95" : 20.54,
+        "p99" : 538.2,
+        "p99_9" : 1294.34,
+        "p99_95" : 1503.16,
+        "p99_99" : 1902.2,
+        "max" : 2232.45,
+        "overSlo" : 6931,
+        "overSloFraction" : 0.010607948232110661
+      },
+      "FINAL" : {
+        "count" : 651160,
+        "p50" : 3.35,
+        "p95" : 20.47,
+        "p99" : 538.87,
+        "p99_9" : 1295.22,
+        "p99_95" : 1498.56,
+        "p99_99" : 1861.41,
+        "max" : 2225.62,
+        "overSlo" : 6920,
+        "overSloFraction" : 0.01062718840223601
+      }
+    },
+    "aggregationOnlySteady" : {
+      "STAGE2" : {
+        "count" : 88915,
+        "p50" : 2.35,
+        "p95" : 9.05,
+        "p99" : 27.95,
+        "p99_9" : 95.63,
+        "p99_95" : 101.04,
+        "p99_99" : 112.59,
+        "max" : 118.0,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      },
+      "FINAL" : {
+        "count" : 88645,
+        "p50" : 2.37,
+        "p95" : 9.06,
+        "p99" : 27.27,
+        "p99_9" : 98.64,
+        "p99_95" : 104.79,
+        "p99_99" : 112.95,
+        "max" : 118.97,
+        "overSlo" : 0,
+        "overSloFraction" : 0.0
+      }
+    },
+    "firstFragmentToFinal" : {
+      "FINAL" : {
+        "count" : 651160,
+        "p50" : 794.79,
+        "p95" : 1072.18,
+        "p99" : 1817.14,
+        "p99_9" : 2558.11,
+        "p99_95" : 2707.93,
+        "p99_99" : 2969.9,
+        "max" : 3469.92,
+        "overSlo" : 537316,
+        "overSloFraction" : 0.8251673935745439
+      }
+    }
+  },
+  "throughput" : {
+    "individualActionsPerSecondMean" : 5959.972727272727,
+    "individualActionsPerSecondMedian" : 5968,
+    "individualActionsPerSecondMin" : 1051,
+    "producerAckedPerSecondMeasure" : 6000.484848484848,
+    "producerMaxScheduleLagMsMeasure" : 38,
+    "producerRequestedRateMeasure" : 6000.0,
+    "producerAchievedRateWholeRun" : 5755.223771332478
+  },
+  "lag" : {
+    "aggbench-b-rescheduling-b-r2-1026220734" : {
+      "maxOldestUnprocessedAgeMs" : 2105,
+      "maxLag" : 4448,
+      "p95Lag" : 2897,
+      "medianLag" : 810
+    }
+  },
+  "events" : {
+    "CONFIG_VERIFIED" : {
+      "count" : 6
+    },
+    "CONSUMER_SHUTDOWN" : {
+      "count" : 6
+    },
+    "DRAINED" : {
+      "count" : 1
+    },
+    "FAULT_POD_DELETE" : {
+      "count" : 6
+    },
+    "INSTANCE_STARTING" : {
+      "count" : 6
+    },
+    "INSTANCE_STOPPING" : {
+      "count" : 6
+    },
+    "MEASURE_END" : {
+      "count" : 1
+    },
+    "MEASURE_START" : {
+      "count" : 1
+    },
+    "PARTITIONS_ASSIGNED" : {
+      "count" : 19
+    },
+    "PARTITIONS_REVOKED" : {
+      "count" : 18
+    },
+    "PARTITION_PROCESSING_STARTED" : {
+      "count" : 60,
+      "maxMsSinceAssignment" : 12304,
+      "maxFirstRecordAgeMs" : 1324
+    },
+    "REDIS_EPOCH" : {
+      "count" : 6
+    },
+    "REPLACEMENT_READY" : {
+      "count" : 6
+    },
+    "SEND_END" : {
+      "count" : 1
+    },
+    "WARMUP_START" : {
+      "count" : 1
+    }
+  },
+  "faultRecovery" : [ {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-6q2gm\"}",
+    "atSecond" : 30.26529,
+    "windowSeconds" : 45.04594,
+    "latency" : {
+      "count" : 446420,
+      "p50" : 17.09,
+      "p95" : 475.8,
+      "p99" : 1187.07,
+      "p99_9" : 1569.26,
+      "p99_95" : 1618.26,
+      "p99_99" : 1838.14,
+      "max" : 2027.14,
+      "overSlo" : 21001,
+      "overSloFraction" : 0.04704314322834999
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 10,
+      "latencyMs" : 540.08,
+      "correlationId" : "k3oem"
+    }, {
+      "partition" : 8,
+      "latencyMs" : 628.73,
+      "correlationId" : "k3oe7"
+    }, {
+      "partition" : 8,
+      "latencyMs" : 616.73,
+      "correlationId" : "k3pej"
+    }, {
+      "partition" : 9,
+      "latencyMs" : 534.08,
+      "correlationId" : "k3pc7"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 597.07,
+      "correlationId" : "k399u"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 611.07,
+      "correlationId" : "k38yp"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 581.07,
+      "correlationId" : "k39zt"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 547.07,
+      "correlationId" : "k3a20"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 546.07,
+      "correlationId" : "k392m"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 505.07,
+      "correlationId" : "k39fc"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 652.07,
+      "correlationId" : "k391u"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 592.07,
+      "correlationId" : "k390t"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 529.07,
+      "correlationId" : "k39od"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 567.07,
+      "correlationId" : "k393i"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 554.07,
+      "correlationId" : "k39ct"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 519.07,
+      "correlationId" : "k39kb"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 634.07,
+      "correlationId" : "k38zo"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 556.07,
+      "correlationId" : "k39vb"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 634.07,
+      "correlationId" : "k39m2"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 652.07,
+      "correlationId" : "k39rv"
+    } ],
+    "finalAggregatesOverSlo" : 4593,
+    "stalledPartitions" : [ ],
+    "maxPartitionResumeMs" : 0,
+    "latencyRecoverySeconds" : 11,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 4448,
+        "peakOldestUnprocessedAgeMs" : 1747,
+        "recoveredToBaselineAfterSeconds" : 45.711424
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 2
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 4
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 109,
+        "maxFirstRecordAgeMs" : 935
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  }, {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-8jpfm\"}",
+    "atSecond" : 75.31123,
+    "windowSeconds" : 44.931068,
+    "latency" : {
+      "count" : 445522,
+      "p50" : 16.48,
+      "p95" : 324.04,
+      "p99" : 974.39,
+      "p99_9" : 1287.75,
+      "p99_95" : 1389.94,
+      "p99_99" : 1591.75,
+      "max" : 1861.58,
+      "overSlo" : 13921,
+      "overSloFraction" : 0.031246492878017246
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 6,
+      "latencyMs" : 617.44,
+      "correlationId" : "k5f1w"
+    }, {
+      "partition" : 6,
+      "latencyMs" : 625.7,
+      "correlationId" : "k5ent"
+    }, {
+      "partition" : 10,
+      "latencyMs" : 1125.29,
+      "correlationId" : "k5dhj"
+    }, {
+      "partition" : 10,
+      "latencyMs" : 1155.29,
+      "correlationId" : "k5dng"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 607.45,
+      "correlationId" : "k56nd"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 581.62,
+      "correlationId" : "k56ex"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 620.13,
+      "correlationId" : "k5724"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 600.23,
+      "correlationId" : "k56y0"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 588.04,
+      "correlationId" : "k56ds"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 630.45,
+      "correlationId" : "k56r2"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 660.2,
+      "correlationId" : "k56eb"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 522.2,
+      "correlationId" : "k56id"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 514.2,
+      "correlationId" : "k572p"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 667.2,
+      "correlationId" : "k56g7"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 657.2,
+      "correlationId" : "k578b"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 547.68,
+      "correlationId" : "k56fo"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 619.68,
+      "correlationId" : "k56q3"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 522.2,
+      "correlationId" : "k57m5"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 503.2,
+      "correlationId" : "k56ve"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 696.2,
+      "correlationId" : "k56lj"
+    } ],
+    "finalAggregatesOverSlo" : 3297,
+    "stalledPartitions" : [ ],
+    "maxPartitionResumeMs" : 0,
+    "latencyRecoverySeconds" : 12,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 3381,
+        "peakOldestUnprocessedAgeMs" : 1570,
+        "recoveredToBaselineAfterSeconds" : 7.918751
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 2
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 3
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 90,
+        "maxFirstRecordAgeMs" : 1011
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  }, {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-hlqp7\"}",
+    "atSecond" : 120.242298,
+    "windowSeconds" : 45.034118,
+    "latency" : {
+      "count" : 446531,
+      "p50" : 17.89,
+      "p95" : 167.08,
+      "p99" : 886.95,
+      "p99_9" : 1301.1,
+      "p99_95" : 1402.1,
+      "p99_99" : 1533.41,
+      "max" : 1727.1,
+      "overSlo" : 9534,
+      "overSloFraction" : 0.021351261166637926
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 9,
+      "latencyMs" : 1079.63,
+      "correlationId" : "k7bg5"
+    }, {
+      "partition" : 9,
+      "latencyMs" : 1076.63,
+      "correlationId" : "k7b1l"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 850.89,
+      "correlationId" : "k73ty"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 843.61,
+      "correlationId" : "k73da"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 793.61,
+      "correlationId" : "k743g"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 868.61,
+      "correlationId" : "k744p"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 888.36,
+      "correlationId" : "k73hg"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 886.49,
+      "correlationId" : "k748j"
+    }, {
+      "partition" : 0,
+      "latencyMs" : 919.84,
+      "correlationId" : "k74j2"
+    }, {
+      "partition" : 0,
+      "latencyMs" : 993.84,
+      "correlationId" : "k740o"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 919.84,
+      "correlationId" : "k745c"
+    }, {
+      "partition" : 0,
+      "latencyMs" : 951.84,
+      "correlationId" : "k73w8"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 757.36,
+      "correlationId" : "k73kf"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 760.36,
+      "correlationId" : "k746h"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 523.36,
+      "correlationId" : "k7510"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 837.36,
+      "correlationId" : "k73h1"
+    }, {
+      "partition" : 0,
+      "latencyMs" : 887.61,
+      "correlationId" : "k73nb"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 870.61,
+      "correlationId" : "k73wz"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 887.61,
+      "correlationId" : "k7390"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 793.61,
+      "correlationId" : "k749j"
+    } ],
+    "finalAggregatesOverSlo" : 2004,
+    "stalledPartitions" : [ ],
+    "maxPartitionResumeMs" : 0,
+    "latencyRecoverySeconds" : 8,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 4373,
+        "peakOldestUnprocessedAgeMs" : 2105,
+        "recoveredToBaselineAfterSeconds" : 9.078843
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 2
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 3
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 310,
+        "maxFirstRecordAgeMs" : 888
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  }, {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-gd67l\"}",
+    "atSecond" : 165.276416,
+    "windowSeconds" : 45.115176,
+    "latency" : {
+      "count" : 447128,
+      "p50" : 15.19,
+      "p95" : 222.78,
+      "p99" : 1408.96,
+      "p99_9" : 2020.72,
+      "p99_95" : 2135.56,
+      "p99_99" : 2329.92,
+      "max" : 2595.92,
+      "overSlo" : 14175,
+      "overSloFraction" : 0.0317023313234689
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 7,
+      "latencyMs" : 1008.59,
+      "correlationId" : "k97xr"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1087.48,
+      "correlationId" : "k98ve"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1081.48,
+      "correlationId" : "k97tr"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1006.56,
+      "correlationId" : "k9830"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1012.56,
+      "correlationId" : "k97zo"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1012.56,
+      "correlationId" : "k97yk"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1045.41,
+      "correlationId" : "k97w6"
+    }, {
+      "partition" : 7,
+      "latencyMs" : 1011.47,
+      "correlationId" : "k97xf"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 711.55,
+      "correlationId" : "k90yr"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 611.55,
+      "correlationId" : "k91mr"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 724.55,
+      "correlationId" : "k91kw"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 653.55,
+      "correlationId" : "k91gc"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 500.27,
+      "correlationId" : "k91ih"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 649.43,
+      "correlationId" : "k90x7"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 728.06,
+      "correlationId" : "k912j"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 729.96,
+      "correlationId" : "k90zb"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 631.55,
+      "correlationId" : "k91c6"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 673.55,
+      "correlationId" : "k90ow"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 598.43,
+      "correlationId" : "k91r8"
+    }, {
+      "partition" : 1,
+      "latencyMs" : 783.51,
+      "correlationId" : "k90m8"
+    } ],
+    "finalAggregatesOverSlo" : 2819,
+    "stalledPartitions" : [ {
+      "partition" : 11,
+      "resumedAfterFaultMs" : 6167,
+      "stallMs" : 2245
+    } ],
+    "maxPartitionResumeMs" : 6167,
+    "latencyRecoverySeconds" : 9,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 4222,
+        "peakOldestUnprocessedAgeMs" : 2062,
+        "recoveredToBaselineAfterSeconds" : 8.093342
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 2
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 3
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 266,
+        "maxFirstRecordAgeMs" : 1324
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  }, {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-zsqc7\"}",
+    "atSecond" : 210.391592,
+    "windowSeconds" : 44.966637,
+    "latency" : {
+      "count" : 445839,
+      "p50" : 15.68,
+      "p95" : 169.25,
+      "p99" : 1166.56,
+      "p99_9" : 1585.39,
+      "p99_95" : 1737.49,
+      "p99_99" : 1963.97,
+      "max" : 2065.97,
+      "overSlo" : 13311,
+      "overSloFraction" : 0.029856069119121476
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 5,
+      "latencyMs" : 695.94,
+      "correlationId" : "kaz7r"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 699.62,
+      "correlationId" : "kaz9f"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 782.02,
+      "correlationId" : "kayf6"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 571.02,
+      "correlationId" : "kaz4o"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 677.72,
+      "correlationId" : "kazf3"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 665.97,
+      "correlationId" : "kazrc"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 813.97,
+      "correlationId" : "kaz03"
+    }, {
+      "partition" : 4,
+      "latencyMs" : 548.97,
+      "correlationId" : "kayl5"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 693.68,
+      "correlationId" : "kayqy"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 708.68,
+      "correlationId" : "kay9e"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 583.38,
+      "correlationId" : "kaypk"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 751.65,
+      "correlationId" : "kayz7"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 606.14,
+      "correlationId" : "kaz9r"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 600.14,
+      "correlationId" : "kayiy"
+    }, {
+      "partition" : 5,
+      "latencyMs" : 568.14,
+      "correlationId" : "kayrh"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 734.14,
+      "correlationId" : "kayn5"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 747.37,
+      "correlationId" : "kaypm"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 611.04,
+      "correlationId" : "kayj1"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 675.04,
+      "correlationId" : "kaymn"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 646.0,
+      "correlationId" : "kazgu"
+    } ],
+    "finalAggregatesOverSlo" : 2796,
+    "stalledPartitions" : [ ],
+    "maxPartitionResumeMs" : 0,
+    "latencyRecoverySeconds" : 9,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 4379,
+        "peakOldestUnprocessedAgeMs" : 1897,
+        "recoveredToBaselineAfterSeconds" : 9.101355
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 2
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 3
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 244,
+        "maxFirstRecordAgeMs" : 638
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  }, {
+    "type" : "FAULT_POD_DELETE",
+    "detail" : "{\"pod\": \"aggregator-dd4f78cd7-dcrvd\"}",
+    "atSecond" : 255.358229,
+    "windowSeconds" : 60.0,
+    "latency" : {
+      "count" : 594659,
+      "p50" : 14.04,
+      "p95" : 135.3,
+      "p99" : 570.44,
+      "p99_9" : 901.57,
+      "p99_95" : 959.69,
+      "p99_99" : 1104.05,
+      "max" : 1323.57,
+      "overSlo" : 7216,
+      "overSloFraction" : 0.01213468559291964
+    },
+    "sampleSlowFinalAggregates" : [ {
+      "partition" : 3,
+      "latencyMs" : 1005.39,
+      "correlationId" : "kcvrm"
+    }, {
+      "partition" : 3,
+      "latencyMs" : 828.39,
+      "correlationId" : "kcvwl"
+    }, {
+      "partition" : 3,
+      "latencyMs" : 848.39,
+      "correlationId" : "kcwez"
+    }, {
+      "partition" : 3,
+      "latencyMs" : 646.39,
+      "correlationId" : "kcvzz"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 877.22,
+      "correlationId" : "kcval"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 877.22,
+      "correlationId" : "kcvar"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 827.22,
+      "correlationId" : "kcvac"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 957.19,
+      "correlationId" : "kcvon"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 973.92,
+      "correlationId" : "kcvck"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 926.92,
+      "correlationId" : "kcv5f"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 919.92,
+      "correlationId" : "kcwew"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 924.92,
+      "correlationId" : "kcvo2"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 951.92,
+      "correlationId" : "kcwdn"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 965.92,
+      "correlationId" : "kcvfk"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 887.39,
+      "correlationId" : "kcv6t"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 871.39,
+      "correlationId" : "kcvcj"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 881.39,
+      "correlationId" : "kcv6e"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 905.39,
+      "correlationId" : "kcvle"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 889.39,
+      "correlationId" : "kcvom"
+    }, {
+      "partition" : 2,
+      "latencyMs" : 897.39,
+      "correlationId" : "kcvje"
+    } ],
+    "finalAggregatesOverSlo" : 1683,
+    "stalledPartitions" : [ ],
+    "maxPartitionResumeMs" : 0,
+    "latencyRecoverySeconds" : 8,
+    "backlog" : {
+      "aggbench-b-rescheduling-b-r2-1026220734" : {
+        "baselineP95Lag" : 1976,
+        "peakLag" : 3501,
+        "peakOldestUnprocessedAgeMs" : 1073,
+        "recoveredToBaselineAfterSeconds" : 33.592293
+      }
+    },
+    "events" : {
+      "CONFIG_VERIFIED" : {
+        "count" : 1
+      },
+      "CONSUMER_SHUTDOWN" : {
+        "count" : 1
+      },
+      "FAULT_POD_DELETE" : {
+        "count" : 1
+      },
+      "INSTANCE_STARTING" : {
+        "count" : 1
+      },
+      "INSTANCE_STOPPING" : {
+        "count" : 1
+      },
+      "PARTITIONS_ASSIGNED" : {
+        "count" : 3
+      },
+      "PARTITIONS_REVOKED" : {
+        "count" : 3
+      },
+      "PARTITION_PROCESSING_STARTED" : {
+        "count" : 8,
+        "maxMsSinceAssignment" : 71,
+        "maxFirstRecordAgeMs" : 879
+      },
+      "REDIS_EPOCH" : {
+        "count" : 1
+      },
+      "REPLACEMENT_READY" : {
+        "count" : 1
+      }
+    }
+  } ],
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  }
+}

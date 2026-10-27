@@ -1,0 +1,13 @@
+{
+  "correctnessFailures" : [ ],
+  "runId" : "abrupt-pod-b-r3-1026210313",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS"
+}

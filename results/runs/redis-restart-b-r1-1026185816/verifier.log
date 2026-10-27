@@ -1,0 +1,13 @@
+{
+  "runId" : "redis-restart-b-r1-1026185816",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "PASS",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ]
+}

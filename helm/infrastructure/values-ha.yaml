@@ -1,0 +1,17 @@
+# Higher-fidelity profile: 3 Kafka brokers (RF 3, min ISR 2) and Redis primary + replica + 3 Sentinels.
+# All pods still run on the single OrbStack node: node failures, cross-node networking and independent disks
+# are NOT reproduced. Needs roughly 6 GB more memory than the local profile.
+profile: ha
+
+kafka:
+  brokers: 3
+  replicationFactor: 3
+  minInsyncReplicas: 2
+  heapOpts: "-Xms768m -Xmx768m"
+  resources:
+    requests: {cpu: 500m, memory: 1536Mi}
+    limits: {memory: 1536Mi}
+
+redis:
+  mode: sentinel
+  replicas: 2

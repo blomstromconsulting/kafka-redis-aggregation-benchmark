@@ -1,0 +1,13 @@
+{
+  "runId" : "rescheduling-a2-r1-1026165132",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ]
+}

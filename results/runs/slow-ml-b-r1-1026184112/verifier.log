@@ -1,0 +1,13 @@
+{
+  "correctnessFailures" : [ ],
+  "runId" : "slow-ml-b-r1-1026184112",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS"
+}

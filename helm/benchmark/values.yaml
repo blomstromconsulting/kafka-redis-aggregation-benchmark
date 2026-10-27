@@ -1,0 +1,105 @@
+# One benchmark run. scripts/benchmark.sh sets runId, variant and the scenario-specific values.
+runId: local
+# a1 = Kafka Streams + streams protocol, a2 = Kafka Streams + classic protocol, b = consumers + Redis
+variant: a1
+
+images:
+  registry: aggbench
+  tag: local
+  pullPolicy: Never
+
+kafka:
+  bootstrapServers: kafka:9092
+  partitions: 12
+  replicationFactor: 1
+
+postgresSecret: aggbench-postgres
+
+# Identical JVM options for every Java component (fairness control).
+jvmOpts: "-XX:+UseG1GC -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+jsonLogs: "true"
+
+aggregator:
+  replicas: 3
+  # Identical resources for A1, A2 and B. Requests are kept low so the stack schedules on a shared laptop
+  # cluster; the limits are what bound each pod.
+  resources:
+    requests: {cpu: 500m, memory: 1Gi}
+    limits: {cpu: "2", memory: 1280Mi}
+  terminationGracePeriodSeconds: 45
+  stateDirSizeLimit: 8Gi
+  # Group membership timing (same for every protocol; verified at startup against the broker's group configs).
+  groupSessionTimeoutMs: 10000
+  groupHeartbeatIntervalMs: 1000
+  maxPollRecords: 500
+  # Back-pressure: pause consumption at this many not-yet-durable business actions (all variants).
+  maxInFlightActions: 20000
+  completedRetention: 120s
+  incompleteTtl: 600s
+  streams:
+    numStandbyReplicas: 1
+    processingGuarantee: exactly_once_v2
+    commitIntervalMs: 100
+    rocksdbBlockCacheMb: 128
+    rocksdbWriteBufferMb: 64
+  redis:
+    uri: redis://redis:6379
+    replayWindow: 60s
+
+executor:
+  maxBatchSize: 200
+  maxConcurrentBatches: 4
+  maxInFlightInference: 256
+
+persistence:
+  replicas: 1
+  dbPoolSize: 24
+  resources:
+    requests: {cpu: 500m, memory: 512Mi}
+    limits: {cpu: "2", memory: 768Mi}
+  faults:
+    latencyMs: 0
+    latencyJitterMs: 0
+    errorBeforeRate: 0
+    errorAfterCommitRate: 0
+
+ml:
+  replicas: 1
+  profile: fixed
+  latencyMs: 50
+  stddevMs: 10
+  tailProbability: 0
+  tailLatencyMs: 0
+  errorRate: 0
+  maxConcurrency: 1024
+  maxQueue: 20000
+  resources:
+    requests: {cpu: 250m, memory: 256Mi}
+    limits: {cpu: "1", memory: 384Mi}
+
+generator:
+  enabled: false
+  scenario: smoke
+  repetition: 1
+  seed: 42
+  eventRate: 100
+  warmupSeconds: 30
+  rampSeconds: 15
+  durationSeconds: 60
+  payloadSizeA: 200
+  payloadSizeB: 200
+  payloadSizeC: 400
+  correlationWindowMs: 1000
+  windowDistribution: uniform
+  outOfOrderPercent: 10
+  duplicatePercent: 2
+  duplicateDelayMaxMs: 2000
+  missingPercent: 1
+  stalePercent: 0
+  inferencePercent: 100
+  hotPartitionFraction: 0
+  hotTrafficFraction: 0
+  drainTimeoutSeconds: 600
+  resources:
+    requests: {cpu: 500m, memory: 768Mi}
+    limits: {cpu: "2", memory: 1Gi}

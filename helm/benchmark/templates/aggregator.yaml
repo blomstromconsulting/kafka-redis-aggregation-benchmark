@@ -1,0 +1,93 @@
+# The system under test. A Deployment (never a StatefulSet) with no PVCs. A1 and A2 use the same image and
+# differ only in GROUP_PROTOCOL; B uses the Redis aggregator image. Resources, probes, rollout strategy and
+# JVM options are identical for all variants.
+{{- $streams := eq (include "bench.isStreams" .) "true" }}
+{{- $a := .Values.aggregator }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aggregator
+  labels:
+    app: aggregator
+    {{- include "bench.labels" . | nindent 4 }}
+spec:
+  replicas: {{ $a.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  selector:
+    matchLabels: {app: aggregator}
+  template:
+    metadata:
+      labels:
+        app: aggregator
+        {{- include "bench.labels" . | nindent 8 }}
+      annotations: {{- include "bench.metricsAnnotations" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ $a.terminationGracePeriodSeconds }}
+      containers:
+        - name: aggregator
+          image: "{{ .Values.images.registry }}/{{ if $streams }}streams-aggregator{{ else }}redis-aggregator{{ end }}:{{ .Values.images.tag }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          env:
+            - name: POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - {name: RUN_ID, value: {{ .Values.runId | quote }}}
+            - {name: VARIANT, value: {{ .Values.variant | quote }}}
+            - {name: JAVA_OPTS, value: {{ .Values.jvmOpts | quote }}}
+            - {name: JSON_LOGS, value: {{ .Values.jsonLogs | quote }}}
+            - {name: KAFKA_BOOTSTRAP, value: {{ .Values.kafka.bootstrapServers | quote }}}
+            - {name: INGRESS_TOPIC, value: {{ include "bench.ingressTopic" . | quote }}}
+            - {name: SESSION_TIMEOUT_MS, value: {{ $a.groupSessionTimeoutMs | quote }}}
+            - {name: HEARTBEAT_INTERVAL_MS, value: {{ $a.groupHeartbeatIntervalMs | quote }}}
+            - {name: MAX_POLL_RECORDS, value: {{ $a.maxPollRecords | quote }}}
+            - {name: MAX_INFLIGHT_ACTIONS, value: {{ $a.maxInFlightActions | quote }}}
+            - {name: COMPLETED_RETENTION, value: {{ $a.completedRetention | quote }}}
+            - {name: INCOMPLETE_TTL, value: {{ $a.incompleteTtl | quote }}}
+            - {name: PERSISTENCE_URL, value: "http://persistence-service:8080"}
+            - {name: INFERENCE_URL, value: "http://ml-simulator:8080"}
+            - {name: EXECUTOR_MAX_BATCH, value: {{ .Values.executor.maxBatchSize | quote }}}
+            - {name: EXECUTOR_CONCURRENT_BATCHES, value: {{ .Values.executor.maxConcurrentBatches | quote }}}
+            - {name: EXECUTOR_MAX_INFERENCE, value: {{ .Values.executor.maxInFlightInference | quote }}}
+            {{- if $streams }}
+            - {name: ACTIONS_TOPIC, value: {{ include "bench.actionsTopic" . | quote }}}
+            - {name: APPLICATION_ID, value: {{ include "bench.groupId" . | quote }}}
+            - {name: GROUP_PROTOCOL, value: {{ if eq .Values.variant "a1" }}"streams"{{ else }}"classic"{{ end }}}
+            - {name: NUM_STANDBY_REPLICAS, value: {{ $a.streams.numStandbyReplicas | quote }}}
+            - {name: PROCESSING_GUARANTEE, value: {{ $a.streams.processingGuarantee | quote }}}
+            - {name: COMMIT_INTERVAL_MS, value: {{ $a.streams.commitIntervalMs | quote }}}
+            - {name: REPLICATION_FACTOR, value: {{ .Values.kafka.replicationFactor | quote }}}
+            - {name: STATE_DIR, value: /var/lib/kafka-streams}
+            - {name: BENCH_STREAMS_ROCKSDB_BLOCK_CACHE_MB, value: {{ $a.streams.rocksdbBlockCacheMb | quote }}}
+            - {name: BENCH_STREAMS_ROCKSDB_WRITE_BUFFER_MB, value: {{ $a.streams.rocksdbWriteBufferMb | quote }}}
+            {{- else }}
+            - {name: GROUP_ID, value: {{ include "bench.groupId" . | quote }}}
+            - {name: GROUP_PROTOCOL, value: "consumer"}
+            - {name: REDIS_URI, value: {{ $a.redis.uri | quote }}}
+            - {name: REDIS_REPLAY_WINDOW, value: {{ $a.redis.replayWindow | quote }}}
+            {{- end }}
+          ports:
+            - {name: http, containerPort: 8080}
+          startupProbe:
+            httpGet: {path: /q/health/live, port: 8080}
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /q/health/ready, port: 8080}
+            periodSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /q/health/live, port: 8080}
+            periodSeconds: 5
+            failureThreshold: 6
+          resources: {{- toYaml $a.resources | nindent 12 }}
+          {{- if $streams }}
+          volumeMounts:
+            - {name: state, mountPath: /var/lib/kafka-streams}
+          {{- end }}
+      {{- if $streams }}
+      volumes:
+        # Ephemeral: deleted with the pod. A container restart keeps it; a new pod starts empty.
+        - name: state
+          emptyDir: {sizeLimit: {{ $a.stateDirSizeLimit }}}
+      {{- end }}

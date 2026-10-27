@@ -1,0 +1,6 @@
+apiVersion: v2
+name: aggbench-infrastructure
+description: Kafka (KRaft), Redis, PostgreSQL, Prometheus and Grafana for the aggregation benchmark
+type: application
+version: 1.0.0
+appVersion: "kafka-4.2.2"

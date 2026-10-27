@@ -1,0 +1,18 @@
+# Shared runtime image for every Quarkus module (fast-jar layout). Build from the repository root:
+#   docker build -f docker/Dockerfile.jvm --build-arg MODULE=streams-aggregator -t aggbench/streams-aggregator:local .
+# All benchmark applications use the same JVM and the same default JVM options (fairness control).
+FROM eclipse-temurin:21.0.8_9-jre
+
+ARG MODULE
+WORKDIR /deployments
+COPY --chown=185:0 ${MODULE}/target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=185:0 ${MODULE}/target/quarkus-app/*.jar /deployments/
+COPY --chown=185:0 ${MODULE}/target/quarkus-app/app/ /deployments/app/
+COPY --chown=185:0 ${MODULE}/target/quarkus-app/quarkus/ /deployments/quarkus/
+
+# Kafka Streams state directory (mounted as an emptyDir in Kubernetes: ephemeral, lost with the pod).
+RUN mkdir -p /var/lib/kafka-streams && chown 185:0 /var/lib/kafka-streams
+USER 185
+
+ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager -jar /deployments/quarkus-run.jar"]

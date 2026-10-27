@@ -1,0 +1,74 @@
+# Prometheus configuration for the benchmark namespace (__NAMESPACE__ is substituted by the Helm chart).
+global:
+  scrape_interval: __SCRAPE_INTERVAL__
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Every pod with prometheus.io/scrape=true: aggregators, persistence, ML simulator, load generator, redis_exporter.
+  - job_name: pods
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces: {names: [__NAMESPACE__]}
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      - source_labels: [__meta_kubernetes_pod_phase]
+        action: keep
+        regex: Running
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: app
+      - source_labels: [__meta_kubernetes_pod_label_aggbench_variant]
+        target_label: variant
+      - source_labels: [__meta_kubernetes_pod_label_aggbench_run]
+        target_label: run_id
+
+  # Container and node CPU / memory from the kubelet resource-metrics endpoint (through the API server proxy).
+  # OrbStack's kubelet does not publish per-container series on /metrics/cadvisor, but it does here.
+  - job_name: kubelet-resource
+    scheme: https
+    authorization:
+      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/$1/proxy/metrics/resource
+
+  # Machine size (machine_cpu_cores) from cAdvisor, used to turn node CPU seconds into utilisation.
+  - job_name: cadvisor
+    scheme: https
+    authorization:
+      credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    tls_config:
+      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecure_skip_verify: true
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        action: keep
+        regex: machine_cpu_cores|machine_memory_bytes

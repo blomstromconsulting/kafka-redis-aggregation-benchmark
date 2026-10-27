@@ -1,0 +1,12 @@
+{
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "PASS",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "overall" : "PASS"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ],
+  "runId" : "medium-a1-r1-1026141741"
+}

@@ -1,0 +1,7 @@
+abrupt-container-a1-r1-1026145204,abrupt-container,a1,1,SuccessCriteriaMet Complete,143
+rolling-a2-r1-1026150348,rolling,a2,1,SuccessCriteriaMet Complete,0
+abrupt-pod-b-r1-1026150644,abrupt-pod,b,1,SuccessCriteriaMet Complete,0
+redis-loss-b-r1-1026150938,redis-loss,b,1,SuccessCriteriaMet Complete,0
+rescheduling-a1-r1-1026151225,rescheduling,a1,1,SuccessCriteriaMet Complete,0
+slow-ml-b-r1-1026151539,slow-ml,b,1,SuccessCriteriaMet Complete,0
+abrupt-pod-b-r1-1026151907,abrupt-pod,b,1,SuccessCriteriaMet Complete,0

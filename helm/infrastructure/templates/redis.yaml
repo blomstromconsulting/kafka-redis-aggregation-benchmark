@@ -1,0 +1,154 @@
+# Redis for variant B. standalone: one node, AOF appendfsync everysec (a crash can lose up to ~1 s of writes).
+# sentinel: redis-0 starts as primary, redis-1 as replica (asynchronous replication), plus 3 Sentinels.
+# maxmemory-policy noeviction: Redis never silently drops aggregation state; it rejects writes instead.
+{{- $ns := .Release.Namespace }}
+{{- $r := .Values.redis }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app: redis}
+  ports:
+    - {name: redis, port: 6379}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: redis
+    {{- if eq $r.mode "standalone" }}
+    statefulset.kubernetes.io/pod-name: redis-0
+    {{- end }}
+  ports:
+    - {name: redis, port: 6379}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  serviceName: redis-headless
+  replicas: {{ if eq $r.mode "standalone" }}1{{ else }}{{ $r.replicas }}{{ end }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {app: redis}
+  template:
+    metadata:
+      labels: {app: redis}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+        prometheus.io/path: /metrics
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: {{ $r.image }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              ROLE_ARGS=""
+              {{- if eq $r.mode "sentinel" }}
+              if [ "${HOSTNAME##*-}" != "0" ]; then
+                ROLE_ARGS="--replicaof redis-0.redis-headless.{{ $ns }}.svc.cluster.local 6379"
+              fi
+              ROLE_ARGS="$ROLE_ARGS --replica-announce-ip ${HOSTNAME}.redis-headless.{{ $ns }}.svc.cluster.local"
+              {{- end }}
+              exec redis-server --dir /data --appendonly yes --appendfsync {{ $r.appendfsync }} --save "" \
+                --maxmemory {{ $r.maxmemory }} --maxmemory-policy noeviction $ROLE_ARGS
+          ports:
+            - {name: redis, containerPort: 6379}
+          readinessProbe:
+            exec: {command: ["redis-cli", "ping"]}
+            periodSeconds: 2
+          resources: {{- toYaml $r.resources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+        - name: exporter
+          image: {{ $r.exporter.image }}
+          env:
+            - {name: REDIS_ADDR, value: "redis://localhost:6379"}
+          ports:
+            - {name: metrics, containerPort: 9121}
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {memory: 64Mi}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ $r.storage }}
+{{- if eq $r.mode "sentinel" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel-headless
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app: redis-sentinel}
+  ports:
+    - {name: sentinel, port: 26379}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  selector: {app: redis-sentinel}
+  ports:
+    - {name: sentinel, port: 26379}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  serviceName: redis-sentinel-headless
+  replicas: {{ $r.sentinel.replicas }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels: {app: redis-sentinel}
+  template:
+    metadata:
+      labels: {app: redis-sentinel}
+    spec:
+      containers:
+        - name: sentinel
+          image: {{ $r.image }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              cat > /tmp/sentinel.conf <<EOF
+              port 26379
+              sentinel resolve-hostnames yes
+              sentinel announce-hostnames yes
+              sentinel announce-ip ${HOSTNAME}.redis-sentinel-headless.{{ $ns }}.svc.cluster.local
+              sentinel monitor {{ $r.sentinel.masterName }} redis-0.redis-headless.{{ $ns }}.svc.cluster.local 6379 {{ $r.sentinel.quorum }}
+              sentinel down-after-milliseconds {{ $r.sentinel.masterName }} {{ $r.sentinel.downAfterMs }}
+              sentinel failover-timeout {{ $r.sentinel.masterName }} {{ $r.sentinel.failoverTimeoutMs }}
+              sentinel parallel-syncs {{ $r.sentinel.masterName }} 1
+              EOF
+              until redis-cli -h redis-0.redis-headless.{{ $ns }}.svc.cluster.local ping; do sleep 1; done
+              exec redis-server /tmp/sentinel.conf --sentinel
+          ports:
+            - {name: sentinel, containerPort: 26379}
+          resources:
+            requests: {cpu: 20m, memory: 32Mi}
+            limits: {memory: 64Mi}
+{{- end }}

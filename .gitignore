@@ -1,0 +1,11 @@
+target/
+.idea/
+*.iml
+.DS_Store
+__pycache__/
+
+# Benchmark results: summaries, per-run verification.json, per-second CSVs, resources.json, timelines and the
+# HTML report are small and reviewable. Every action's raw latency (~25 MB per target-load run) and pod logs stay
+# local; they can be regenerated only by re-running the benchmark.
+results/**/latencies.csv.gz
+results/**/logs/

@@ -1,0 +1,91 @@
+# PostgreSQL behind the persistence service (and the benchmark's manifest/metrics tables).
+# The password is generated once and preserved across upgrades (lookup of the existing Secret).
+{{- $existing := lookup "v1" "Secret" .Release.Namespace "aggbench-postgres" }}
+{{- $password := randAlphaNum 24 }}
+{{- if $existing }}{{- $password = index $existing.data "password" | b64dec }}{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aggbench-postgres
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  database: {{ .Values.postgres.database | quote }}
+  user: {{ .Values.postgres.user | quote }}
+  password: {{ $password | quote }}
+  jdbc-url: "jdbc:postgresql://postgres:5432/{{ .Values.postgres.database }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  selector: {app: postgres}
+  ports:
+    - {name: postgres, port: 5432}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels: {{- include "aggbench.labels" . | nindent 4 }}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: {app: postgres}
+  template:
+    metadata:
+      labels: {app: postgres}
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          args:
+            - "-c"
+            - "shared_buffers=512MB"
+            - "-c"
+            - "max_connections=200"
+            - "-c"
+            - "synchronous_commit=on"
+            - "-c"
+            - "max_wal_size=16GB"
+            - "-c"
+            - "checkpoint_timeout=30min"
+            - "-c"
+            - "log_checkpoints=on"
+            - "-c"
+            - "log_autovacuum_min_duration=0"
+            - "-c"
+            - "wal_compression=on"
+            - "-c"
+            - "work_mem=64MB"
+          env:
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+            - name: POSTGRES_DB
+              valueFrom: {secretKeyRef: {name: aggbench-postgres, key: database}}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: aggbench-postgres, key: user}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: aggbench-postgres, key: password}}
+          ports:
+            - {name: postgres, containerPort: 5432}
+          readinessProbe:
+            exec: {command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]}
+            periodSeconds: 3
+          resources: {{- toYaml .Values.postgres.resources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+            - {name: shm, mountPath: /dev/shm}
+      volumes:
+        - name: shm
+          emptyDir: {medium: Memory, sizeLimit: 1Gi}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage }}

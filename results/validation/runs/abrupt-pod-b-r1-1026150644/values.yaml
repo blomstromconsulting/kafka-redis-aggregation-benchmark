@@ -1,0 +1,31 @@
+runId: "abrupt-pod-b-r1-1026150644"
+variant: "b"
+images: {tag: "local"}
+kafka: {partitions: 12, replicationFactor: 1}
+aggregator:
+  replicas: 3
+  groupSessionTimeoutMs: 10000
+  groupHeartbeatIntervalMs: 1000
+  redis: {uri: "redis://redis:6379", replayWindow: "60s"}
+persistence:
+  faults: {errorBeforeRate: 0, errorAfterCommitRate: 0}
+ml: {profile: "fixed", latencyMs: 50, errorRate: 0}
+generator:
+  scenario: "abrupt-pod"
+  repetition: 1
+  seed: 42
+  eventRate: 1000
+  warmupSeconds: 30
+  rampSeconds: 30
+  durationSeconds: 100
+  payloadSizeA: 200
+  payloadSizeB: 200
+  payloadSizeC: 400
+  correlationWindowMs: 1000
+  windowDistribution: "uniform"
+  outOfOrderPercent: 10
+  duplicatePercent: 2
+  duplicateDelayMaxMs: 2000
+  missingPercent: 1
+  stalePercent: 0
+  inferencePercent: 100

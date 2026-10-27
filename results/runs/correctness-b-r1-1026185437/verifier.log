@@ -1,0 +1,13 @@
+{
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ],
+  "runId" : "correctness-b-r1-1026185437",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "PASS",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  }
+}
