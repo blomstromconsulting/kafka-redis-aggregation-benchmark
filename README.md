@@ -43,6 +43,7 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 ./scripts/report.sh
 ./scripts/verify-run.sh <run-id>  # re-run the independent verifier (raw rows are kept if verification failed)
 ./scripts/analysis/window_sensitivity.py results/runs/<run>  # steady/failure split under two window rules
+./scripts/analysis/disruption_impact.py --summary results/runs/<run> ...  # late events per rollout / pod failure
 ./scripts/cleanup.sh            # remove the current run; --all also removes infrastructure and volumes
 ```
 
@@ -82,6 +83,7 @@ Live view: `kubectl -n aggbench port-forward svc/grafana 3000` → http://localh
 - [docs/FAILURE-RECOVERY.md](docs/FAILURE-RECOVERY.md) – what happens on restart, kill, Redis loss
 - [docs/RESULTS.md](docs/RESULTS.md) – generated findings (only from executed runs)
 - [docs/ANALYSIS-NOTES.md](docs/ANALYSIS-NOTES.md) – manual root-cause notes on specific runs, with evidence
+- [docs/DISRUPTION-IMPACT.md](docs/DISRUPTION-IMPACT.md) – late events per rollout and per pod failure, as decision input
 - [docs/adr/](docs/adr/) – architecture decision records
 
 ## Pinned versions
