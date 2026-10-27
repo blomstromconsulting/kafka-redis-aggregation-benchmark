@@ -41,7 +41,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 74815.3,
+    "late_events_over_2s": 25557.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-a2-r1-1027135852",
@@ -85,7 +88,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 94259.7,
+    "late_events_over_2s": 21143.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-b-r1-1027140617",
@@ -129,7 +135,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 7826.0,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-b-r2-1027141330",
@@ -173,7 +182,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 5886.7,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-b-r3-1027142048",
@@ -217,6 +229,9 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 10852.7,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   }
 ]

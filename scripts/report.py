@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the comparative benchmark report from saved run results (stdlib only).
 
-Inputs : results/runs/<run>/verification.json, resources.json, per_second_latency.csv, lag.csv,
+Inputs : results/runs/<run>/verification.json, resources.json, disruption.json, per_second_latency.csv, lag.csv,
          throughput.csv, timeline.csv; results/not-run/not-run.csv
 Outputs: results/summary.csv, results/summary.json, results/report.html, docs/RESULTS.md
 
@@ -51,6 +51,8 @@ def load_runs():
                "rep": v.get("repetition")}
         rfile = os.path.join(path, "resources.json")
         run["resources"] = json.load(open(rfile)) if os.path.isfile(rfile) else {}
+        dfile = os.path.join(path, "disruption.json")
+        run["disruption"] = json.load(open(dfile)) if os.path.isfile(dfile) else {}
         runs.append(run)
     return runs
 
@@ -149,6 +151,10 @@ def run_metrics(run):
         "slo_overall": g(v, "slo", "overall"),
         "slo_steady": g(v, "slo", "steadyStateLatency"),
         "slo_failure": g(v, "slo", "failureWindowLatency"),
+        # Per disruption (one fault; S5 divided by its six), from disruption.json (scripts/analysis/disruption_impact.py).
+        "added_late_events": g(run["disruption"], "perDisruption", "addedLateEvents") if faults else None,
+        "late_events_over_2s": g(run["disruption"], "perDisruption", "eventsOver2s") if faults else None,
+        "late_events_over_10s": g(run["disruption"], "perDisruption", "eventsOver10s") if faults else None,
     }
     if m["saturated"] and m["slo_overall"] in ("PASS", "FAIL") and m["correctness"] != "FAIL":
         m["slo_overall"] = "INCONCLUSIVE"
@@ -386,6 +392,44 @@ def main_table_rows(by):
     return [(label, [f(v) for v in VARIANTS]) for label, f in rows]
 
 
+# One row per disruption type; the B-only Redis disruptions show "n/a" for A1 and A2.
+DISRUPTIONS = [("rolling", "Rollout of all aggregator pods (S2)"),
+               ("abrupt-pod", "Abrupt pod failure, new pod (S3)"),
+               ("abrupt-container", "Container crash, same pod (S3b)"),
+               ("cold-pod", "Graceful pod replacement, empty state (S4)"),
+               ("rescheduling", "One of six replacements 45 s apart (S5)"),
+               ("redis-restart", "Redis restart (S8)"),
+               ("redis-loss", "Redis crash losing the last 5 s (S8)")]
+DISRUPTION_MEASURES = [("added_late_events", "late events added"), ("late_events_over_2s", "events > 2 s"),
+                       ("late_events_over_10s", "events > 10 s"), ("recovery_s", "back under 500 ms after, s")]
+
+
+def disruption_rows(by):
+    """Rows of (disruption, measure, cells) for the disruptions that have per-run disruption.json data."""
+    rows = []
+    for scenario, label in DISRUPTIONS:
+        if not any(m.get("added_late_events") is not None for v in VARIANTS for m in by.get((scenario, v), [])):
+            continue
+        for key, measure in DISRUPTION_MEASURES:
+            cells = []
+            for v in VARIANTS:
+                if scenario.startswith("redis-") and v != "b":
+                    cells.append("n/a")
+                    continue
+                ms = [m for m in by.get((scenario, v), []) if m["correctness"] != "FAIL"]
+                cells.append(fmt_summary(summarize([m[key] for m in ms])))
+            rows.append((label, measure, cells))
+    return rows
+
+
+DISRUPTION_NOTE = ("A late event is an incoming event whose own durable result (INDIVIDUAL action) committed more than "
+                   "500 ms after the broker appended it. Late events added = late events among actions in flight during "
+                   "the 120 s after the fault, minus what the same run produces without a fault over that time (S5: per "
+                   "replacement; its recovery time is the slowest of the six). Normal-operation noise (shared PostgreSQL stalls) makes small values imprecise and can "
+                   "make them negative; the > 2 s and > 10 s counts are gross and hardly affected by it. Method and "
+                   "decision use: docs/DISRUPTION-IMPACT.md.")
+
+
 def correctness_cell(by, variant):
     runs = [m for (sc, v), ms in by.items() if v == variant for m in ms]
     if not runs:
@@ -542,6 +586,17 @@ def html_report(metrics, by, scenarios, runs_by_id, not_run, results_text):
         out.append(f"<tr><td>{html.escape(label)}</td>" + "".join(f"<td>{html.escape(c)}</td>" for c in cells) + "</tr>")
     out.append("</table></div>")
 
+    rows = disruption_rows(by)
+    if rows:
+        out.append("<h2>Late events per disruption</h2><div class='wrap'><table><tr><th>One disruption</th><th>Measure</th>" +
+                   "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
+        previous = None
+        for label, measure, cells in rows:
+            out.append(f"<tr><td>{html.escape(label) if label != previous else ''}</td><td>{html.escape(measure)}</td>" +
+                       "".join(f"<td>{html.escape(c)}</td>" for c in cells) + "</tr>")
+            previous = label
+        out.append(f"</table></div><p class='muted'>{html.escape(DISRUPTION_NOTE)}</p>")
+
     out.append("<h2>SLO evaluation (p99.95 ≤ 500 ms on every path)</h2><div class='wrap'><table><tr><th>Scenario</th>" +
                "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
     for scenario, cells in slo_rows(by, scenarios):
@@ -686,6 +741,16 @@ def results_md(metrics, by, scenarios, not_run):
     lines += ["", "Values: median [min–max] (n repetitions). “Worst path” = highest p99.95 among INDIVIDUAL, STAGE2 "
                   "and FINAL actions. Latency is end-to-end to the durable database commit.", ""]
 
+    rows = disruption_rows(by)
+    if rows:
+        lines += ["## Late events per disruption", "", "| One disruption | Measure | " + " | ".join(SHORT[v] for v in VARIANTS)
+                  + " |", "|---|---|" + "---|" * len(VARIANTS)]
+        previous = None
+        for label, measure, cells in rows:
+            lines.append(f"| {label if label != previous else ''} | {measure} | " + " | ".join(cells) + " |")
+            previous = label
+        lines += ["", DISRUPTION_NOTE, ""]
+
     lines += ["## SLO evaluation", "", "| Scenario | " + " | ".join(SHORT[v] for v in VARIANTS) + " |", "|---|" + "---|" * 3]
     for scenario, cells in slo_rows(by, scenarios):
         lines.append(f"| {scenario} | " + " | ".join(cells) + " |")
@@ -733,6 +798,11 @@ def results_md(metrics, by, scenarios, not_run):
                             ("cold-pod", "Lowest failure-induced latency, cold replacement (S4 p99.95, ms)"),
                             ("rescheduling", "Lowest latency under frequent rescheduling (S5 p99.95, ms)")):
         lines.append(best(scenario, "measure_p9995", label))
+    for scenario, label in (("rolling", "Fewest late events added per rollout (S2)"),
+                            ("abrupt-pod", "Fewest late events added per abrupt pod failure (S3)"),
+                            ("cold-pod", "Fewest late events added per cold pod replacement (S4)")):
+        if any(m.get("added_late_events") is not None for v in VARIANTS for m in by.get((scenario, v), [])):
+            lines.append(best(scenario, "added_late_events", label))
     lines.append(best("abrupt-pod", "max_partition_stall_ms", "Shortest partition stall after abrupt failure (S3, ms)"))
     lines.append(best("rolling", "max_partition_stall_ms", "Shortest partition stall during rolling upgrade (S2, ms)"))
 

@@ -5,8 +5,9 @@ that one disruption pushes over the 500 ms SLO at 6,000 events/s: one rollout, o
 Counts add up, so they can be multiplied by how often each disruption happens and compared with an error budget.
 
 All figures come from the core campaign (`results/runs`, the same runs as `docs/RESULTS.md`), computed by
-`scripts/analysis/disruption_impact.py` with a 120 s horizon. Per-run values are in
-`results/disruption-impact.csv`.
+`scripts/analysis/disruption_impact.py` with a 120 s horizon. Every run saves its figures as `disruption.json`
+(written by `benchmark.sh` after verification), and the generated report of every result set shows them per
+variant in the table **Late events per disruption** (`docs/RESULTS.md`, `results/*/RESULTS.md`, `report.html`).
 
 ## Method
 

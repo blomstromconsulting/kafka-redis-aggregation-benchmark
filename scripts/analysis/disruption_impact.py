@@ -15,7 +15,9 @@ aggregation-only count (append -> executor pickup, which persistence stalls do n
 impact set. As a check of the input, the verifier's failure-window over-SLO count (append rule, 60 s) is recomputed
 and a difference from verification.json is reported on stderr.
 
-Usage: scripts/analysis/disruption_impact.py [--horizon 120] [--summary] results/runs/<run> [...]
+Usage: scripts/analysis/disruption_impact.py [--horizon 120] [--summary | --write] results/runs/<run> [...]
+  --write saves each run's figures as <run>/disruption.json (benchmark.sh does this after every run; the report
+  reads these files, so it does not need the local-only latencies.csv.gz).
 """
 import argparse
 import gzip
@@ -128,10 +130,35 @@ def summary(rows):
         print(f"| {scenario} | {variant.upper()} | {len(members)} | " + " | ".join(cells) + " |")
 
 
+def write_run_file(run_dir, row, horizon):
+    """Saves the per-disruption figures next to verification.json, so reports work without latencies.csv.gz."""
+    data = {
+        "source": "scripts/analysis/disruption_impact.py",
+        "horizonSeconds": horizon,
+        "sloMs": SLO_MS,
+        "faults": row["faults"],
+        "impactSeconds": round(row["impact_s"], 1),
+        "baselineLateEventsPerMinute": round(row["baseline_late_events_per_min"], 1),
+        "perDisruption": {
+            "lateEvents": round(row["late_events"], 1),
+            "baselineLateEvents": round(row["baseline_events"], 1),
+            "addedLateEvents": round(row["excess_events"], 1),
+            "addedLateAggregates": round(row["excess_aggregates"], 1),
+            "addedLateActions": round(row["excess_actions"], 1),
+            "eventsOver2s": round(row["events_over_2s"], 1),
+            "eventsOver10s": round(row["events_over_10s"], 1),
+            "aggregationOnlyLateAggregates": round(row["aggregation_only_late_aggregates"], 1),
+        },
+    }
+    with open(os.path.join(run_dir, "disruption.json"), "w") as handle:
+        json.dump(data, handle, indent=2)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--horizon", type=float, default=120.0, help="seconds after each fault counted as its impact")
     parser.add_argument("--summary", action="store_true", help="median [min-max] per scenario and variant")
+    parser.add_argument("--write", action="store_true", help="write <run>/disruption.json instead of printing")
     parser.add_argument("runs", nargs="+")
     args = parser.parse_args()
     runs = [r for r in args.runs if os.path.exists(os.path.join(r, "latencies.csv.gz"))]
@@ -139,6 +166,10 @@ def main():
         print(f"{os.path.basename(os.path.normpath(missing))}: latencies.csv.gz missing", file=sys.stderr)
     with multiprocessing.Pool() as pool:
         rows = pool.starmap(analyse, [(r, args.horizon) for r in runs])
+    if args.write:
+        for run_dir, row in zip(runs, rows):
+            write_run_file(run_dir, row, args.horizon)
+        return
     if args.summary:
         summary(rows)
         return

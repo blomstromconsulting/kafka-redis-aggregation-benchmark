@@ -108,6 +108,9 @@ Default repetitions: 3 (configurable, e.g. `--repetitions 5`).
 - **Partition stall**: per ingress partition, the largest gap between consecutive durable completions after the
   fault; stalls > 2 s are listed with the time at which processing resumed.
 - **Latency recovery**: first second after the fault from which per-second p99 stays ≤ 500 ms for 10 s.
+- **Late events per disruption**: incoming events whose own action exceeded 500 ms among actions in flight during
+  the 120 s after a fault, minus the run's own rate outside that period; also events over 2 s and 10 s. Saved per
+  run as `disruption.json` and tabulated per variant in the report (method: `docs/DISRUPTION-IMPACT.md`).
 - **Backlog recovery**: time until the committed-offset lag returns to ≤ max(2 × pre-fault p95, 100) for 5 samples.
 - Affected keys: FINAL aggregates over the SLO inside the window, with partition and latency (sample of 20).
 - Restoration / assignment / standby / replay timelines come from application events (`bench_events`).

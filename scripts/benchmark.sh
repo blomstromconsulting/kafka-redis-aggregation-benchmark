@@ -283,6 +283,10 @@ run_one() {
     > "$out/verifier.log" 2>&1 || verify_status=$?
   kill "$pg_pid" 2>/dev/null || true
   log "verification exit=$verify_status: $(jq -c '{correctness: .correctness.status, slo: .slo.overall, steady_p9995_final: .latency.steady.FINAL.p99_95}' "$out/verification.json" 2>/dev/null || tail -3 "$out/verifier.log")"
+  # Late events per disruption, saved with the run (latencies.csv.gz is not committed; the report reads this file).
+  if [[ -f "$out/latencies.csv.gz" ]]; then
+    python3 "$ROOT/scripts/analysis/disruption_impact.py" --write "$out" || log "disruption analysis failed"
+  fi
 
   if [[ "$KEEP_DB" != true && -f "$out/verification.json" ]]; then
     psql_exec "DELETE FROM action_receipts WHERE run_id = '$run_id'; DELETE FROM aggregates WHERE run_id = '$run_id';

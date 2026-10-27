@@ -1,0 +1,18 @@
+{
+  "source": "scripts/analysis/disruption_impact.py",
+  "horizonSeconds": 120.0,
+  "sloMs": 500.0,
+  "faults": 1,
+  "impactSeconds": 120.0,
+  "baselineLateEventsPerMinute": 0.0,
+  "perDisruption": {
+    "lateEvents": 49137.0,
+    "baselineLateEvents": 0.0,
+    "addedLateEvents": 49137.0,
+    "addedLateAggregates": 17274.0,
+    "addedLateActions": 82712.0,
+    "eventsOver2s": 29816.0,
+    "eventsOver10s": 1217.0,
+    "aggregationOnlyLateAggregates": 7452.0
+  }
+}

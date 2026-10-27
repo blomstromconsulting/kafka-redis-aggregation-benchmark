@@ -41,7 +41,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 5612.0,
+    "late_events_over_2s": 4641.0,
+    "late_events_over_10s": 238.0
   },
   {
     "run": "abrupt-pod-b-r1-1026150644",
@@ -85,7 +88,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "PASS",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 169.0,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "abrupt-pod-b-r1-1026151907",
@@ -129,7 +135,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "PASS",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 2879.0,
+    "late_events_over_2s": 2338.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "redis-loss-b-r1-1026150938",
@@ -173,7 +182,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "PASS",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 7035.0,
+    "late_events_over_2s": 3812.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rescheduling-a1-r1-1026151225",
@@ -217,7 +229,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "PASS",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 777.0,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-a2-r1-1026150348",
@@ -261,7 +276,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "PASS",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 7756.0,
+    "late_events_over_2s": 1866.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "slow-ml-b-r1-1026151539",
@@ -305,6 +323,9 @@
     "saturated": false,
     "slo_overall": "PASS",
     "slo_steady": "PASS",
-    "slo_failure": "PASS"
+    "slo_failure": "PASS",
+    "added_late_events": 0.0,
+    "late_events_over_2s": 0.0,
+    "late_events_over_10s": 0.0
   }
 ]

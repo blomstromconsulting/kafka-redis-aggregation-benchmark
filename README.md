@@ -44,6 +44,7 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 ./scripts/verify-run.sh <run-id>  # re-run the independent verifier (raw rows are kept if verification failed)
 ./scripts/analysis/window_sensitivity.py results/runs/<run>  # steady/failure split under two window rules
 ./scripts/analysis/disruption_impact.py --summary results/runs/<run> ...  # late events per rollout / pod failure
+                                    # (--write saves <run>/disruption.json; benchmark.sh does it after every run)
 ./scripts/analysis/late_event_causes.py results/runs/<b-run> ...  # B: late events by pod and stage
 ./scripts/cleanup.sh            # remove the current run; --all also removes infrastructure and volumes
 ```

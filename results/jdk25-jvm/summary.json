@@ -41,7 +41,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 74921.0,
+    "late_events_over_2s": 38916.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-a2-r1-1027113825",
@@ -85,7 +88,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 87801.7,
+    "late_events_over_2s": 15341.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "rolling-b-r1-1027114547",
@@ -129,7 +135,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "FAIL"
+    "slo_failure": "FAIL",
+    "added_late_events": 20776.3,
+    "late_events_over_2s": 299.0,
+    "late_events_over_10s": 0.0
   },
   {
     "run": "steady-a1-r1-1027123643",
@@ -173,7 +182,10 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "NOT_APPLICABLE"
+    "slo_failure": "NOT_APPLICABLE",
+    "added_late_events": null,
+    "late_events_over_2s": null,
+    "late_events_over_10s": null
   },
   {
     "run": "steady-a2-r1-1027124408",
@@ -217,7 +229,10 @@
     "saturated": false,
     "slo_overall": "PASS",
     "slo_steady": "PASS",
-    "slo_failure": "NOT_APPLICABLE"
+    "slo_failure": "NOT_APPLICABLE",
+    "added_late_events": null,
+    "late_events_over_2s": null,
+    "late_events_over_10s": null
   },
   {
     "run": "steady-b-r1-1027125129",
@@ -261,6 +276,9 @@
     "saturated": false,
     "slo_overall": "FAIL",
     "slo_steady": "FAIL",
-    "slo_failure": "NOT_APPLICABLE"
+    "slo_failure": "NOT_APPLICABLE",
+    "added_late_events": null,
+    "late_events_over_2s": null,
+    "late_events_over_10s": null
   }
 ]
