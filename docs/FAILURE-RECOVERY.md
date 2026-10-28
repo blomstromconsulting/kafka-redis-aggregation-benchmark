@@ -81,7 +81,9 @@ actions. Latency suffers twice: merges stall while Redis is unreachable (retries
 `replayWindow` × input rate records. The benchmark distinguishes:
 - `redis-restart` — graceful restart, AOF intact (no acknowledged loss; tests reconnection + replay cost),
 - `redis-loss` — crash that loses the last ~5 s of acknowledged writes (AOF disabled 5 s before
-  `SHUTDOWN NOSAVE`, so the restarted server loads stale data): models asynchronous-replication loss,
+  `SHUTDOWN NOSAVE`, so the restarted server loads stale data): models asynchronous-replication loss. Each run
+  starts with a fresh Redis pod, because the kubelet delays a container that exits again within 10 minutes by
+  10 s or more (crash back-off), which would otherwise add to the run after an earlier redis-loss run,
 - `redis-failover` — genuine Sentinel promotion of the replica (HA profile only).
 
 ## Incomplete aggregates and pending finalization

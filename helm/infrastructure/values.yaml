@@ -11,9 +11,11 @@ kafka:
   minInsyncReplicas: 1
   heapOpts: "-Xms1g -Xmx1g"
   storage: 30Gi
+  # 1 GiB heap; the rest of the limit is page cache for the log segments (Kafka reads and writes through it). The
+  # limit was 2 GiB until 2026-10-27, which the broker reached in the Kafka Streams runs (ANALYSIS-NOTES note 1).
   resources:
     requests: {cpu: 500m, memory: 1536Mi}
-    limits: {memory: 2Gi}
+    limits: {memory: 4Gi}
   # Group membership timing, identical for classic, consumer and streams groups (fairness control).
   # Classic groups get the same values from the client side (session.timeout.ms / heartbeat.interval.ms).
   # The heartbeat also paces partition moves: a new owner learns of its assignment on its next heartbeat (ADR 0003).

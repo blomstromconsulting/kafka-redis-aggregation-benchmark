@@ -1,0 +1,3 @@
+22:57:10 chaos: waiting 120.0s until measurement + 60s
+22:59:10 chaos: injecting redis-loss
+22:59:32 chaos: done (redis-loss)

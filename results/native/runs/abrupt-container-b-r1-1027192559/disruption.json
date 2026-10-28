@@ -1,0 +1,28 @@
+{
+  "source": "scripts/analysis/disruption_impact.py",
+  "horizonSeconds": 120.0,
+  "sloMs": 500.0,
+  "faults": 1,
+  "impactSeconds": 120.0,
+  "baselineLateEventsPerMinute": 4951.5,
+  "perDisruption": {
+    "lateEvents": 27193.0,
+    "baselineLateEvents": 9903.0,
+    "addedLateEvents": 17290.0,
+    "addedLateAggregates": 5195.0,
+    "addedLateActions": 28277.0,
+    "eventsOver2s": 17546.0,
+    "eventsOver10s": 86.0,
+    "aggregationOnlyLateAggregates": 6747.0
+  },
+  "baselineResultLateEventsPerMinute": 0.0,
+  "perDisruptionResultReady": {
+    "lateEvents": 20267.0,
+    "baselineLateEvents": 0.0,
+    "addedLateEvents": 20267.0,
+    "addedLateAggregates": 7236.0,
+    "addedLateActions": 34247.0,
+    "eventsOver2s": 16864.0,
+    "eventsOver10s": 57.0
+  }
+}

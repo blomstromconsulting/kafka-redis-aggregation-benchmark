@@ -1,0 +1,13 @@
+{
+  "correctnessFailures" : [ ],
+  "runId" : "abrupt-container-b-r1-1027192559",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS"
+}

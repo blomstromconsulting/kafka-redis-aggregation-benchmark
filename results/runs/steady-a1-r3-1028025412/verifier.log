@@ -1,0 +1,13 @@
+{
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ],
+  "runId" : "steady-a1-r3-1028025412",
+  "slo" : {
+    "loadAchieved" : false,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "reason" : "the requested offered load was not achieved",
+    "overall" : "INCONCLUSIVE"
+  }
+}

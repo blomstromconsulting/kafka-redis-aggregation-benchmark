@@ -1,0 +1,12 @@
+{
+  "runId" : "steady-a2-r1-1027153028",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "PASS",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "overall" : "PASS"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ]
+}

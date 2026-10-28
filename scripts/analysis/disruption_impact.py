@@ -12,7 +12,8 @@ docs/ANALYSIS-NOTES.md note 2):
 
 Every figure is divided by the number of faults in the run (S5 has six). Severity (> 2 s, > 10 s) and the
 aggregation-only count (append -> executor pickup, which persistence stalls do not reach) are gross counts in the
-impact set. As a check of the input, the verifier's failure-window over-SLO count (append rule, 60 s) is recomputed
+impact set. When latencies.csv.gz has a result_ms column (verifier since 2026-10-27), every count is computed a
+second time on the result-ready basis (end-to-end without the persistence step; columns prefixed result_). As a check of the input, the verifier's failure-window over-SLO count (append rule, 60 s) is recomputed
 and a difference from verification.json is reported on stderr.
 
 Usage: scripts/analysis/disruption_impact.py [--horizon 120] [--summary | --write] results/runs/<run> [...]
@@ -30,8 +31,11 @@ import sys
 KINDS = ("INDIVIDUAL", "STAGE2", "FINAL")
 SLO_MS = 500.0
 VERIFIER_WINDOW_SECONDS = 60.0
-COLUMNS = ("late_events", "baseline_events", "excess_events", "excess_aggregates", "excess_actions",
-           "events_over_2s", "events_over_10s", "aggregation_only_late_aggregates")
+BASE_COLUMNS = ("late_events", "baseline_events", "excess_events", "excess_aggregates", "excess_actions",
+                "events_over_2s", "events_over_10s")
+# Latency bases: end to end (to the durable commit) and result ready (before persistence), by latencies.csv column.
+BASES = (("", "done_ms"), ("result_", "result_ms"))
+COLUMNS = BASE_COLUMNS + ("aggregation_only_late_aggregates",) + tuple("result_" + c for c in BASE_COLUMNS)
 
 
 def env_value(path, key):
@@ -57,36 +61,40 @@ def analyse(run_dir, horizon):
     faults = [f["atSecond"] for f in verification.get("faultRecovery") or []]
     duration = float(env_value(os.path.join(run_dir, "scenario.env"), "DURATION_SECONDS"))
     impact_seconds = union_length([(f, f + horizon) for f in faults], duration)
-    late_in = {k: 0 for k in KINDS}
-    late_out = {k: 0 for k in KINDS}
-    over_2s = over_10s = aggregation_only = verifier_check = 0
+    counts = {}
+    aggregation_only = verifier_check = 0
     with gzip.open(os.path.join(run_dir, "latencies.csv.gz"), "rt") as handle:
-        next(handle)
+        column = {name: i for i, name in enumerate(next(handle).rstrip("\n").split(","))}
+        bases = [(prefix, column[name]) for prefix, name in BASES if name in column]
+        for prefix, _ in bases:
+            counts[prefix] = {"in": {k: 0 for k in KINDS}, "out": {k: 0 for k in KINDS}, "over_2s": 0, "over_10s": 0}
+        i_kind, i_append, i_ready = column["kind"], column["append_s"], column["ready_ms"]
         for line in handle:
-            kind, _, append_s, ready_ms, done_ms, _ = line.split(",")
-            append_s = float(append_s)
+            fields = line.rstrip("\n").split(",")
+            kind, append_s = fields[i_kind], float(fields[i_append])
             if append_s < 0 or append_s >= duration:
                 continue
-            done_ms = float(done_ms)
-            late = done_ms > SLO_MS
-            if late and any(f <= append_s < f + VERIFIER_WINDOW_SECONDS for f in faults):
-                verifier_check += 1
-            done_s = append_s + done_ms / 1000
-            if not any(append_s < f + horizon and done_s >= f for f in faults):
-                late_out[kind] += late
-                continue
-            late_in[kind] += late
-            if kind == "INDIVIDUAL":
-                over_2s += done_ms > 2000
-                over_10s += done_ms > 10000
-            elif kind == "FINAL":
-                aggregation_only += float(ready_ms) > SLO_MS
+            for prefix, index in bases:
+                latency_ms = float(fields[index])
+                late = latency_ms > SLO_MS
+                count = counts[prefix]
+                if not prefix and late and any(f <= append_s < f + VERIFIER_WINDOW_SECONDS for f in faults):
+                    verifier_check += 1
+                end_s = append_s + latency_ms / 1000
+                if not any(append_s < f + horizon and end_s >= f for f in faults):
+                    count["out"][kind] += late
+                    continue
+                count["in"][kind] += late
+                if kind == "INDIVIDUAL":
+                    count["over_2s"] += latency_ms > 2000
+                    count["over_10s"] += latency_ms > 10000
+                elif kind == "FINAL" and not prefix:
+                    aggregation_only += float(fields[i_ready]) > SLO_MS
     reported = verification["latency"]["failure"].get("ALL", {}).get("overSlo", 0) if faults else 0
     if verifier_check != reported:
         print(f"{os.path.basename(os.path.normpath(run_dir))}: recomputed failure-window over-SLO {verifier_check}, "
               f"verification.json {reported}", file=sys.stderr)
     baseline_seconds = duration - impact_seconds
-    expected = {k: late_out[k] / baseline_seconds * impact_seconds for k in KINDS}
     events = max(len(faults), 1)
     row = {
         "run": os.path.basename(os.path.normpath(run_dir)),
@@ -95,18 +103,28 @@ def analyse(run_dir, horizon):
         "repetition": verification["repetition"],
         "faults": len(faults),
         "impact_s": impact_seconds,
-        "baseline_late_events_per_min": late_out["INDIVIDUAL"] / baseline_seconds * 60,
-        "late_events": late_in["INDIVIDUAL"],
-        "baseline_events": expected["INDIVIDUAL"],
-        "excess_events": late_in["INDIVIDUAL"] - expected["INDIVIDUAL"],
-        "excess_aggregates": late_in["FINAL"] - expected["FINAL"],
-        "excess_actions": sum(late_in.values()) - sum(expected.values()),
-        "events_over_2s": over_2s,
-        "events_over_10s": over_10s,
-        "aggregation_only_late_aggregates": aggregation_only,
     }
+    for prefix, _ in BASES:
+        count = counts.get(prefix)
+        if count is None:
+            row.update({prefix + "baseline_late_events_per_min": None, **{prefix + c: None for c in BASE_COLUMNS}})
+            continue
+        late_in, late_out = count["in"], count["out"]
+        expected = {k: late_out[k] / baseline_seconds * impact_seconds for k in KINDS}
+        row.update({
+            prefix + "baseline_late_events_per_min": late_out["INDIVIDUAL"] / baseline_seconds * 60,
+            prefix + "late_events": late_in["INDIVIDUAL"],
+            prefix + "baseline_events": expected["INDIVIDUAL"],
+            prefix + "excess_events": late_in["INDIVIDUAL"] - expected["INDIVIDUAL"],
+            prefix + "excess_aggregates": late_in["FINAL"] - expected["FINAL"],
+            prefix + "excess_actions": sum(late_in.values()) - sum(expected.values()),
+            prefix + "events_over_2s": count["over_2s"],
+            prefix + "events_over_10s": count["over_10s"],
+        })
+    row["aggregation_only_late_aggregates"] = aggregation_only
     for column in COLUMNS:
-        row[column] /= events
+        if row[column] is not None:
+            row[column] /= events
     return row
 
 
@@ -124,7 +142,10 @@ def summary(rows):
     for (scenario, variant), members in sorted(groups.items()):
         cells = []
         for column in COLUMNS:
-            values = [m[column] for m in members]
+            values = [m[column] for m in members if m[column] is not None]
+            if not values:
+                cells.append("—")
+                continue
             median = statistics.median(values)
             cells.append(fmt(median) if len(values) == 1 else f"{fmt(median)} [{fmt(min(values))}–{fmt(max(values))}]")
         print(f"| {scenario} | {variant.upper()} | {len(members)} | " + " | ".join(cells) + " |")
@@ -132,6 +153,22 @@ def summary(rows):
 
 def write_run_file(run_dir, row, horizon):
     """Saves the per-disruption figures next to verification.json, so reports work without latencies.csv.gz."""
+    def per_disruption(prefix):
+        if row[prefix + "late_events"] is None:
+            return None
+        figures = {
+            "lateEvents": row[prefix + "late_events"],
+            "baselineLateEvents": row[prefix + "baseline_events"],
+            "addedLateEvents": row[prefix + "excess_events"],
+            "addedLateAggregates": row[prefix + "excess_aggregates"],
+            "addedLateActions": row[prefix + "excess_actions"],
+            "eventsOver2s": row[prefix + "events_over_2s"],
+            "eventsOver10s": row[prefix + "events_over_10s"],
+        }
+        if not prefix:
+            figures["aggregationOnlyLateAggregates"] = row["aggregation_only_late_aggregates"]
+        return {key: round(value, 1) for key, value in figures.items()}
+
     data = {
         "source": "scripts/analysis/disruption_impact.py",
         "horizonSeconds": horizon,
@@ -139,17 +176,11 @@ def write_run_file(run_dir, row, horizon):
         "faults": row["faults"],
         "impactSeconds": round(row["impact_s"], 1),
         "baselineLateEventsPerMinute": round(row["baseline_late_events_per_min"], 1),
-        "perDisruption": {
-            "lateEvents": round(row["late_events"], 1),
-            "baselineLateEvents": round(row["baseline_events"], 1),
-            "addedLateEvents": round(row["excess_events"], 1),
-            "addedLateAggregates": round(row["excess_aggregates"], 1),
-            "addedLateActions": round(row["excess_actions"], 1),
-            "eventsOver2s": round(row["events_over_2s"], 1),
-            "eventsOver10s": round(row["events_over_10s"], 1),
-            "aggregationOnlyLateAggregates": round(row["aggregation_only_late_aggregates"], 1),
-        },
+        "perDisruption": per_disruption(""),
     }
+    if row["result_late_events"] is not None:
+        data["baselineResultLateEventsPerMinute"] = round(row["result_baseline_late_events_per_min"], 1)
+        data["perDisruptionResultReady"] = per_disruption("result_")
     with open(os.path.join(run_dir, "disruption.json"), "w") as handle:
         json.dump(data, handle, indent=2)
 
@@ -175,7 +206,7 @@ def main():
         return
     print(",".join(rows[0].keys()) if rows else "")
     for row in rows:
-        print(",".join(f"{v:.1f}" if isinstance(v, float) else str(v) for v in row.values()))
+        print(",".join(f"{v:.1f}" if isinstance(v, float) else ("" if v is None else str(v)) for v in row.values()))
 
 
 if __name__ == "__main__":

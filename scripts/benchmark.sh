@@ -121,6 +121,17 @@ teardown_run() {
 }
 
 reset_shared_state() {
+  # The Redis crash restarts the container in place, and the kubelet delays a second restart of the same container
+  # within 10 minutes (crash back-off, 10 s and more), so every redis-loss run starts with a fresh Redis pod.
+  if [[ "$P_FAULT" == "redis-loss" ]]; then
+    k delete pod redis-0 >/dev/null
+    local ready=""
+    for _ in $(seq 1 120); do
+      k exec redis-0 -c redis -- redis-cli ping 2>/dev/null | grep -q PONG && { ready=1; break; }
+      sleep 1
+    done
+    [[ -n "$ready" ]] || die "Redis did not become ready after recreating redis-0"
+  fi
   # Redis is used only by variant B; it is flushed before every run so memory and keyspace start empty.
   k exec redis-0 -c redis -- redis-cli CONFIG SET appendonly yes >/dev/null
   k exec redis-0 -c redis -- redis-cli FLUSHALL >/dev/null
@@ -269,6 +280,7 @@ run_one() {
   log "load generator finished: ${state:-TIMEOUT}"
   [[ -n "$chaos_pid" ]] && { wait "$chaos_pid" || log "chaos script reported an error (see chaos.log)"; }
   collect_artifacts "$run_id" "$out"
+  python3 "$ROOT/scripts/lib/gc_pauses.py" "$out" || log "GC pause extraction failed"
 
   local prom_pid pg_pid
   prom_pid=$(port_forward svc/prometheus 19090 9090)

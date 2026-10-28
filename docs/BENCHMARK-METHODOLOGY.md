@@ -12,6 +12,7 @@ percentiles over every action** (nearest-rank; no histogram buckets, no averagin
 | 3. Final aggregate latency | latest broker append time of A, B, C | COMMIT of the persisted aggregate (incl. ML inference) |
 | 4. Aggregation-only latency | latest required append time | the executor picks the action up (state merged and, for Streams, the EOS transaction committed and read) |
 | 5. First-fragment-to-final (supplementary) | earliest append time of A, B, C | COMMIT of the aggregate (includes the inter-fragment gaps of the workload) |
+| 6. Result-ready latency (since 2026-10-27) | as 1–3 | the result exists, before it is persisted: executor pickup (INDIVIDUAL, STAGE2); pickup + ML inference including its queueing (FINAL) |
 
 - *Broker append time*: the ingress topic uses `message.timestamp.type=LogAppendTime`, so every record carries the
   broker's clock at append; the latest/earliest of the relevant fragments is carried through the intents.
@@ -25,6 +26,10 @@ percentiles over every action** (nearest-rank; no histogram buckets, no averagin
 - Live Prometheus histograms are for observation only; reported numbers never come from them.
 
 The SLO (p99.95 ≤ 500 ms) applies to measurements 1–3 separately; "worst path" is the maximum of the three.
+Measurement 6 applies the same rules without the persistence step, whose real-world counterpart is publishing
+the result to a Kafka topic and Redis (not modelled): the verifier reports latency, SLO verdict
+(`sloResultReady`), recovery and partition stalls on both bases, and reports lead with result ready. In A the
+end point already includes the transactional Kafka hop to the executor; in B there is no Kafka publish.
 
 ## Workload
 
@@ -130,6 +135,9 @@ performance result. The report additionally marks a run INCONCLUSIVE when the no
 - The laptop is shared with other workloads (other namespaces on the same cluster). Their load adds noise;
   saturation is detected and flagged, not prevented.
 - Broker-side metrics come from the clients and the lag monitor (no broker JMX exporter).
+- GC pauses come from GC logs of the aggregator pods (JVM `-Xlog:gc`, native `-XX:+PrintGC`, same format),
+  saved per run as `gc.json`. Only pods alive at the end of a run are collected, so in fault scenarios the
+  replaced pods' pauses are missing.
 - Container CPU and memory come from the kubelet resource endpoint. Its samples carry explicit timestamps, so
   Prometheus writes no staleness marker and returns a deleted pod's last value for five more minutes;
   `prom_export.py` keeps only samples younger than 45 s, and group figures are statistics of the instantaneous

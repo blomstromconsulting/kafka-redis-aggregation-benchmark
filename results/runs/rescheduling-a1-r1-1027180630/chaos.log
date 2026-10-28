@@ -1,0 +1,13 @@
+18:06:49 chaos: waiting 90.9s until measurement + 30s
+18:08:19 chaos: rescheduling 1/6
+18:08:20 chaos: waiting 44.3s until measurement + 75s
+18:09:04 chaos: rescheduling 2/6
+18:09:10 chaos: waiting 39.0s until measurement + 120s
+18:09:49 chaos: rescheduling 3/6
+18:10:00 chaos: waiting 34.2s until measurement + 165s
+18:10:34 chaos: rescheduling 4/6
+18:10:42 chaos: waiting 37.5s until measurement + 210s
+18:11:19 chaos: rescheduling 5/6
+18:11:33 chaos: waiting 31.5s until measurement + 255s
+18:12:04 chaos: rescheduling 6/6
+18:12:15 chaos: done (reschedule)

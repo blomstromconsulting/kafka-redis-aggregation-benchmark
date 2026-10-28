@@ -15,15 +15,16 @@ kafka:
 
 postgresSecret: aggbench-postgres
 
-# Identical JVM options for every Java component (fairness control).
-jvmOpts: "-XX:+UseG1GC -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+# Identical JVM options for every Java component (fairness control). GC pauses are logged to stdout in the same
+# format by the JVM (-Xlog:gc) and the native executables (-XX:+PrintGC); scripts/lib/gc_pauses.py reads them.
+jvmOpts: "-XX:+UseG1GC -XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError -Xlog:gc:stdout"
 jsonLogs: "true"
 
 aggregator:
   # jvm: JRE image (tag <images.tag>, options jvmOpts). native: Oracle GraalVM native executable with G1 GC
   # (tag <images.tag>-native, options nativeOpts). Both come from scripts/build.sh [--native].
   build: jvm
-  nativeOpts: "-XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError"
+  nativeOpts: "-XX:MaxRAMPercentage=50 -XX:+ExitOnOutOfMemoryError -XX:+PrintGC"
   replicas: 3
   # Identical resources for A1, A2 and B. Requests are kept low so the stack schedules on a shared laptop
   # cluster; the limits are what bound each pod.

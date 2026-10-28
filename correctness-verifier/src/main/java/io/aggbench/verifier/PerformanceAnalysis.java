@@ -24,6 +24,10 @@ import java.util.TreeMap;
  *   <li>Latency = durable commit time (persistence service, after COMMIT) − broker append time of the latest
  *       fragment the action depends on. Exact percentiles over every sample.</li>
  *   <li>Aggregation-only latency = executor pickup time − same broker append time (STAGE2/FINAL).</li>
+ *   <li>Result-ready latency = the moment the action's result exists, before it is persisted − same broker append
+ *       time: executor pickup for INDIVIDUAL/STAGE2, pickup + ML inference (including its queueing) for FINAL. It
+ *       is the end-to-end latency without the persistence step (whose real-world equivalent is publishing the
+ *       result).</li>
  *   <li>Steady vs failure windows: a failure window starts at each injected fault ({@code FAULT_*} events written
  *       by chaos.sh) and lasts {@code faultWindowSeconds}.</li>
  * </ul>
@@ -43,6 +47,7 @@ final class PerformanceAnalysis {
     private long[] src = new long[1 << 16];
     private long[] first = new long[1 << 16];
     private long[] ready = new long[1 << 16];
+    private long[] resultReady = new long[1 << 16];
     private long[] done = new long[1 << 16];
     private int[] partition = new int[1 << 16];
     private final Map<Integer, String> slowCorrelationIds = new HashMap<>();
@@ -86,6 +91,9 @@ final class PerformanceAnalysis {
         latency.put("aggregationOnly", latencyStats(measureStart, measureEnd, faults, Window.ALL, Metric.AGGREGATION));
         latency.put("aggregationOnlySteady", latencyStats(measureStart, measureEnd, faults, Window.STEADY, Metric.AGGREGATION));
         latency.put("firstFragmentToFinal", latencyStats(measureStart, measureEnd, faults, Window.ALL, Metric.FIRST_TO_FINAL));
+        latency.put("resultMeasure", latencyStats(measureStart, measureEnd, faults, Window.ALL, Metric.RESULT));
+        latency.put("resultSteady", latencyStats(measureStart, measureEnd, faults, Window.STEADY, Metric.RESULT));
+        latency.put("resultFailure", faults.isEmpty() ? Map.of() : latencyStats(measureStart, measureEnd, faults, Window.FAILURE, Metric.RESULT));
         result.put("latency", latency);
 
         result.put("throughput", throughput(measureStart, measureEnd, runRow));
@@ -109,17 +117,18 @@ final class PerformanceAnalysis {
 
     private enum Window { ALL, STEADY, FAILURE }
 
-    private enum Metric { E2E, AGGREGATION, FIRST_TO_FINAL }
+    private enum Metric { E2E, AGGREGATION, FIRST_TO_FINAL, RESULT }
 
     private void load() throws SQLException {
         db.setAutoCommit(false);
         String sql = """
                 SELECT r.kind, r.source_append_us, r.first_append_us, r.ready_us,
-                       coalesce(b.postcommit_us, r.precommit_us), r.ingress_partition, r.correlation_id
+                       coalesce(b.postcommit_us, r.precommit_us), r.ingress_partition, r.correlation_id, r.ready_us
                 FROM action_receipts r LEFT JOIN commit_batches b ON b.batch_id = r.batch_id WHERE r.run_id = ?
                 UNION ALL
                 SELECT 'FINAL', a.source_append_us, a.first_append_us, a.ready_us,
-                       coalesce(b.postcommit_us, a.precommit_us), a.ingress_partition, a.correlation_id
+                       coalesce(b.postcommit_us, a.precommit_us), a.ingress_partition, a.correlation_id,
+                       a.ready_us + coalesce(a.inference_us, 0)
                 FROM aggregates a LEFT JOIN commit_batches b ON b.batch_id = a.batch_id WHERE a.run_id = ?""";
         try (PreparedStatement ps = db.prepareStatement(sql)) {
             ps.setFetchSize(20_000);
@@ -138,6 +147,7 @@ final class PerformanceAnalysis {
                     ready[size] = rs.getLong(4);
                     done[size] = rs.getLong(5);
                     partition[size] = rs.getInt(6);
+                    resultReady[size] = rs.getLong(8);
                     if (done[size] - src[size] > sloMs * 1000) {
                         slowCorrelationIds.put(size, rs.getString(7));
                     }
@@ -156,6 +166,7 @@ final class PerformanceAnalysis {
             src = Arrays.copyOf(src, n);
             first = Arrays.copyOf(first, n);
             ready = Arrays.copyOf(ready, n);
+            resultReady = Arrays.copyOf(resultReady, n);
             done = Arrays.copyOf(done, n);
             partition = Arrays.copyOf(partition, n);
         }
@@ -195,13 +206,14 @@ final class PerformanceAnalysis {
                     case E2E -> done[i] - src[i];
                     case AGGREGATION -> ready[i] - src[i];
                     case FIRST_TO_FINAL -> done[i] - first[i];
+                    case RESULT -> resultReady[i] - src[i];
                 };
                 values.add(Math.max(0, value));
                 all.add(Math.max(0, value));
             }
             byKind.put(KINDS[k], Stats.summarize(values.values, values.size, sloMs));
         }
-        if (metric == Metric.E2E) {
+        if (metric == Metric.E2E || metric == Metric.RESULT) {
             byKind.put("ALL", Stats.summarize(all.values, all.size, sloMs));
         }
         return byKind;
@@ -329,13 +341,34 @@ final class PerformanceAnalysis {
         }
         result.put("finalAggregatesOverSlo", slowFinals);
 
-        // Processing stalls per ingress partition: largest gap between consecutive durable completions.
+        // Processing stalls per ingress partition and latency recovery, on both bases (durable commit; result ready).
+        result.putAll(partitionStalls(done, fault, windowEnd, ""));
+        result.put("latencyRecoverySeconds", latencyRecovery(done, fault.tsUs(), windowEnd));
+        LongList resultAll = new LongList();
+        for (int i = 0; i < size; i++) {
+            if (src[i] >= fault.tsUs() && src[i] < windowEnd) {
+                resultAll.add(resultReady[i] - src[i]);
+            }
+        }
+        result.put("resultLatency", Stats.summarize(resultAll.values, resultAll.size, sloMs));
+        result.putAll(partitionStalls(resultReady, fault, windowEnd, "result"));
+        result.put("resultLatencyRecoverySeconds", latencyRecovery(resultReady, fault.tsUs(), windowEnd));
+        result.put("backlog", backlogRecovery(fault.tsUs(), windowEnd, measureStart, faults));
+        result.put("events", eventSummary(fault.tsUs(), windowEnd));
+        return result;
+    }
+
+    /**
+     * Largest gap between consecutive completions per ingress partition after the fault (gaps over 2 s are listed).
+     * {@code completed} is the durable commit time or the result-ready time; keys get {@code prefix} (camel case).
+     */
+    private Map<String, Object> partitionStalls(long[] completed, Fault fault, long windowEnd, String prefix) {
         Map<Integer, LongList> completions = new TreeMap<>();
         long from = fault.tsUs() - 10_000_000L;
         long to = Math.max(windowEnd, fault.tsUs() + 30_000_000L);
         for (int i = 0; i < size; i++) {
-            if (done[i] >= from && done[i] < to) {
-                completions.computeIfAbsent(partition[i], p -> new LongList()).add(done[i]);
+            if (completed[i] >= from && completed[i] < to) {
+                completions.computeIfAbsent(partition[i], p -> new LongList()).add(completed[i]);
             }
         }
         List<Map<String, Object>> stalls = new ArrayList<>();
@@ -357,21 +390,18 @@ final class PerformanceAnalysis {
                 stalls.add(Map.of("partition", entry.getKey(), "stallMs", maxGap / 1000, "resumedAfterFaultMs", resumeMs));
             }
         }
-        result.put("stalledPartitions", stalls);
-        result.put("maxPartitionResumeMs", maxResumeMs);
-
-        // Latency recovery: first second after the fault from which per-second p99 stays <= SLO for 10 s.
-        result.put("latencyRecoverySeconds", latencyRecovery(fault.tsUs(), windowEnd));
-        result.put("backlog", backlogRecovery(fault.tsUs(), windowEnd, measureStart, faults));
-        result.put("events", eventSummary(fault.tsUs(), windowEnd));
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put(prefix.isEmpty() ? "stalledPartitions" : prefix + "StalledPartitions", stalls);
+        result.put(prefix.isEmpty() ? "maxPartitionResumeMs" : prefix + "MaxPartitionResumeMs", maxResumeMs);
         return result;
     }
 
-    private Object latencyRecovery(long faultUs, long windowEnd) {
+    /** First second after the fault from which the per-second p99 stays within the SLO for 10 s. */
+    private Object latencyRecovery(long[] completed, long faultUs, long windowEnd) {
         TreeMap<Long, LongList> perSecond = new TreeMap<>();
         for (int i = 0; i < size; i++) {
             if (src[i] >= faultUs && src[i] < windowEnd + 60_000_000L) {
-                perSecond.computeIfAbsent((src[i] - faultUs) / 1_000_000, s -> new LongList()).add(done[i] - src[i]);
+                perSecond.computeIfAbsent((src[i] - faultUs) / 1_000_000, s -> new LongList()).add(completed[i] - src[i]);
             }
         }
         List<Long> seconds = new ArrayList<>(perSecond.keySet());
@@ -486,10 +516,11 @@ final class PerformanceAnalysis {
         String[] names = {"INDIVIDUAL", "STAGE2", "FINAL"};
         try (PrintWriter out = new PrintWriter(new java.io.OutputStreamWriter(
                 new java.util.zip.GZIPOutputStream(Files.newOutputStream(file)), java.nio.charset.StandardCharsets.UTF_8))) {
-            out.println("kind,partition,append_s,ready_ms,done_ms,first_append_s");
+            out.println("kind,partition,append_s,ready_ms,done_ms,first_append_s,result_ms");
             for (int i = 0; i < size; i++) {
-                out.printf("%s,%d,%.6f,%.3f,%.3f,%.6f%n", names[kind[i]], partition[i], (src[i] - measureStart) / 1e6,
-                        (ready[i] - src[i]) / 1000.0, (done[i] - src[i]) / 1000.0, (first[i] - measureStart) / 1e6);
+                out.printf("%s,%d,%.6f,%.3f,%.3f,%.6f,%.3f%n", names[kind[i]], partition[i], (src[i] - measureStart) / 1e6,
+                        (ready[i] - src[i]) / 1000.0, (done[i] - src[i]) / 1000.0, (first[i] - measureStart) / 1e6,
+                        (resultReady[i] - src[i]) / 1000.0);
             }
         }
     }

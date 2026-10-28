@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the comparative benchmark report from saved run results (stdlib only).
 
-Inputs : results/runs/<run>/verification.json, resources.json, disruption.json, per_second_latency.csv, lag.csv,
+Inputs : results/runs/<run>/verification.json, resources.json, disruption.json, gc.json, per_second_latency.csv, lag.csv,
          throughput.csv, timeline.csv; results/not-run/not-run.csv
 Outputs: results/summary.csv, results/summary.json, results/report.html, docs/RESULTS.md
 
@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.environ.get("AGGBENCH_RESULTS", os.path.join(ROOT, "results"))
+RESULTS_REL = os.path.relpath(RESULTS, ROOT)
 VARIANTS = ["a1", "a2", "b"]
 VARIANT_NAMES = {"a1": "A1 Streams (streams protocol)", "a2": "A2 Streams (classic protocol)", "b": "B Consumers + Redis"}
 SHORT = {"a1": "A1 Streams", "a2": "A2 Classic", "b": "B Redis"}
@@ -53,6 +54,8 @@ def load_runs():
         run["resources"] = json.load(open(rfile)) if os.path.isfile(rfile) else {}
         dfile = os.path.join(path, "disruption.json")
         run["disruption"] = json.load(open(dfile)) if os.path.isfile(dfile) else {}
+        gfile = os.path.join(path, "gc.json")
+        run["gc"] = json.load(open(gfile)) if os.path.isfile(gfile) else {}
         runs.append(run)
     return runs
 
@@ -111,6 +114,11 @@ def run_metrics(run):
     # by the verifier, so 0 means "no partition stalled for more than 2 s").
     stalls = [p.get("stallMs", 0) for f in faults for p in (f.get("stalledPartitions") or [])]
     numeric_recovery = [x for x in recovery_s if isinstance(x, (int, float))]
+    # Result-ready basis (verifier since 2026-10-27): latency without the persistence step.
+    has_result = bool(lat.get("resultMeasure"))
+    result_recovery = [f.get("resultLatencyRecoverySeconds") for f in faults]
+    numeric_result_recovery = [x for x in result_recovery if isinstance(x, (int, float))]
+    result_stalls = [p.get("stallMs", 0) for f in faults for p in (f.get("resultStalledPartitions") or [])]
     m = {
         "run": run["id"], "scenario": run["scenario"], "variant": run["variant"], "rep": run["rep"],
         "load_achieved": g(v, "load", "loadAchieved"),
@@ -155,11 +163,32 @@ def run_metrics(run):
         "added_late_events": g(run["disruption"], "perDisruption", "addedLateEvents") if faults else None,
         "late_events_over_2s": g(run["disruption"], "perDisruption", "eventsOver2s") if faults else None,
         "late_events_over_10s": g(run["disruption"], "perDisruption", "eventsOver10s") if faults else None,
+        "result_steady_p9995": worst_path(lat.get("resultSteady", {})) if has_result else None,
+        "result_measure_p9995": worst_path(lat.get("resultMeasure", {})) if has_result else None,
+        "result_failure_p9995": worst_path(lat.get("resultFailure", {})) if has_result and lat.get("resultFailure") else None,
+        "result_recovery_s": (max(numeric_result_recovery) if numeric_result_recovery else
+                              ("not recovered" if faults else None)) if has_result else None,
+        "result_max_partition_stall_ms": (max(result_stalls) if result_stalls else 0) if has_result and faults else None,
+        "slo_result_overall": g(v, "sloResultReady", "overall") if has_result else None,
+        "slo_result_steady": g(v, "sloResultReady", "steadyStateLatency") if has_result else None,
+        "slo_result_failure": g(v, "sloResultReady", "failureWindowLatency") if has_result else None,
+        "result_added_late_events": g(run["disruption"], "perDisruptionResultReady", "addedLateEvents") if faults else None,
+        "result_late_events_over_2s": g(run["disruption"], "perDisruptionResultReady", "eventsOver2s") if faults else None,
+        "result_late_events_over_10s": g(run["disruption"], "perDisruptionResultReady", "eventsOver10s") if faults else None,
+        "gc_max_pause_ms": g(run["gc"], "aggregator", "maxPauseMs"),
+        "gc_pauses_over_100ms": g(run["gc"], "aggregator", "pausesOver100ms"),
     }
     if m["saturated"] and m["slo_overall"] in ("PASS", "FAIL") and m["correctness"] != "FAIL":
         m["slo_overall"] = "INCONCLUSIVE"
         m["slo_note"] = f"node CPU p95 {m['node_cpu_p95']:.0%} > {SATURATION_THRESHOLD:.0%} (resource-saturated)"
+    if m["saturated"] and m["slo_result_overall"] in ("PASS", "FAIL") and m["correctness"] != "FAIL":
+        m["slo_result_overall"] = "INCONCLUSIVE"
     return m
+
+
+def has_result_basis(metrics):
+    """True when the runs carry result-ready latency (then it is the primary basis of the report)."""
+    return any(m.get("result_measure_p9995") is not None for m in metrics)
 
 
 def summarize(values):
@@ -366,17 +395,34 @@ def main_table_rows(by):
     def s(scenario, variant, key):
         return summarize([m[key] for m in by.get((scenario, variant), []) if m["correctness"] != "FAIL"])
 
-    rows = [
+    result_rows = [
+        ("Result-ready p99.95, worst path, ms (S1 steady window; without persistence)",
+         lambda v: fmt_summary(s("steady", v, "result_steady_p9995"))),
+        ("Rolling upgrade p99.95, result ready, ms (S2 whole window)", lambda v: fmt_summary(s("rolling", v, "result_measure_p9995"))),
+        ("Abrupt failure p99.95, result ready, ms (S3 whole window)", lambda v: fmt_summary(s("abrupt-pod", v, "result_measure_p9995"))),
+        ("Cold replacement p99.95, result ready, ms (S4 whole window)", lambda v: fmt_summary(s("cold-pod", v, "result_measure_p9995"))),
+        ("Frequent rescheduling p99.95, result ready, ms (S5 whole window)",
+         lambda v: fmt_summary(s("rescheduling", v, "result_measure_p9995"))),
+        ("Recovery to SLO after abrupt failure, result ready, s (S3)", lambda v: fmt_summary(s("abrupt-pod", v, "result_recovery_s"))),
+    ]
+    gc_rows = [
+        ("Longest GC pause in an aggregator pod, ms (S1)", lambda v: fmt_summary(s("steady", v, "gc_max_pause_ms"))),
+        ("Longest GC pause in an aggregator pod, ms (S2 rolling)", lambda v: fmt_summary(s("rolling", v, "gc_max_pause_ms"))),
+    ]
+    has_result = any(m.get("result_measure_p9995") is not None for ms in by.values() for m in ms)
+    has_gc = any(m.get("gc_max_pause_ms") is not None for ms in by.values() for m in ms)
+
+    rows = (result_rows if has_result else []) + [
         ("Sustained throughput, fragments/s processed (S1)", lambda v: fmt_summary(s("steady", v, "processed_per_s"))),
         ("Producer achieved rate, fragments/s (S1)", lambda v: fmt_summary(s("steady", v, "achieved_rate"))),
-        ("Normal p99.95, worst path, ms (S1 steady window)", lambda v: fmt_summary(s("steady", v, "steady_p9995"))),
+        ("Normal p99.95, worst path, end to end, ms (S1 steady window)", lambda v: fmt_summary(s("steady", v, "steady_p9995"))),
         ("Aggregation-only p99.95, completing fragment append → executor pickup, ms (S1 steady window)",
          lambda v: fmt_summary(s("steady", v, "aggregation_only_steady_p9995"))),
-        ("Rolling upgrade p99.95, ms (S2 whole window)", lambda v: fmt_summary(s("rolling", v, "measure_p9995"))),
-        ("Abrupt failure p99.95, ms (S3 whole window)", lambda v: fmt_summary(s("abrupt-pod", v, "measure_p9995"))),
-        ("Cold replacement p99.95, ms (S4 whole window)", lambda v: fmt_summary(s("cold-pod", v, "measure_p9995"))),
-        ("Frequent rescheduling p99.95, ms (S5 whole window)", lambda v: fmt_summary(s("rescheduling", v, "measure_p9995"))),
-        ("Recovery to SLO after abrupt failure, s (S3)", lambda v: fmt_summary(s("abrupt-pod", v, "recovery_s"))),
+        ("Rolling upgrade p99.95, end to end, ms (S2 whole window)", lambda v: fmt_summary(s("rolling", v, "measure_p9995"))),
+        ("Abrupt failure p99.95, end to end, ms (S3 whole window)", lambda v: fmt_summary(s("abrupt-pod", v, "measure_p9995"))),
+        ("Cold replacement p99.95, end to end, ms (S4 whole window)", lambda v: fmt_summary(s("cold-pod", v, "measure_p9995"))),
+        ("Frequent rescheduling p99.95, end to end, ms (S5 whole window)", lambda v: fmt_summary(s("rescheduling", v, "measure_p9995"))),
+        ("Recovery to SLO after abrupt failure, end to end, s (S3)", lambda v: fmt_summary(s("abrupt-pod", v, "recovery_s"))),
         ("Longest single-partition processing stall, ms (S3 abrupt kill)", lambda v: fmt_summary(s("abrupt-pod", v, "max_partition_stall_ms"))),
         ("Longest single-partition processing stall, ms (S2 rolling)", lambda v: fmt_summary(s("rolling", v, "max_partition_stall_ms"))),
         ("Partitions stalled > 2 s (S5 rescheduling, distinct)", lambda v: fmt_summary(s("rescheduling", v, "stalled_partitions"))),
@@ -388,7 +434,7 @@ def main_table_rows(by):
         ("Aggregator memory, MiB max (S1, 3 pods)", lambda v: fmt_summary(s("steady", v, "aggregator_mem_mb"))),
         ("Redis CPU, cores avg / memory MiB (S1)", lambda v: f"{fmt_summary(s('steady', v, 'redis_cpu'), 2)} / {fmt_summary(s('steady', v, 'redis_mem_mb'))}" if v == "b" else "n/a"),
         ("Kafka broker CPU, cores avg (S1)", lambda v: fmt_summary(s("steady", v, "kafka_cpu"), 2)),
-    ]
+    ] + (gc_rows if has_gc else [])
     return [(label, [f(v) for v in VARIANTS]) for label, f in rows]
 
 
@@ -404,13 +450,15 @@ DISRUPTION_MEASURES = [("added_late_events", "late events added"), ("late_events
                        ("late_events_over_10s", "events > 10 s"), ("recovery_s", "back under 500 ms after, s")]
 
 
-def disruption_rows(by):
-    """Rows of (disruption, measure, cells) for the disruptions that have per-run disruption.json data."""
+def disruption_rows(by, prefix=""):
+    """Rows of (disruption, measure, cells) for the disruptions that have per-run disruption.json data;
+    prefix "result_" gives the result-ready basis."""
     rows = []
     for scenario, label in DISRUPTIONS:
-        if not any(m.get("added_late_events") is not None for v in VARIANTS for m in by.get((scenario, v), [])):
+        if not any(m.get(prefix + "added_late_events") is not None for v in VARIANTS for m in by.get((scenario, v), [])):
             continue
         for key, measure in DISRUPTION_MEASURES:
+            key = prefix + key
             cells = []
             for v in VARIANTS:
                 if scenario.startswith("redis-") and v != "b":
@@ -426,8 +474,10 @@ DISRUPTION_NOTE = ("A late event is an incoming event whose own durable result (
                    "500 ms after the broker appended it. Late events added = late events among actions in flight during "
                    "the 120 s after the fault, minus what the same run produces without a fault over that time (S5: per "
                    "replacement; its recovery time is the slowest of the six). Normal-operation noise (shared PostgreSQL stalls) makes small values imprecise and can "
-                   "make them negative; the > 2 s and > 10 s counts are gross and hardly affected by it. Method and "
-                   "decision use: docs/DISRUPTION-IMPACT.md.")
+                   "make them negative; the > 2 s and > 10 s counts are gross and hardly affected by it. Result ready: "
+                   "the same, measured to the moment the result exists before persistence (pickup; for final aggregates "
+                   "pickup + ML inference). Method and decision use: docs/DISRUPTION-IMPACT.md.")
+BASIS_TITLES = {"result_": "result ready, without persistence", "": "end to end, to the database commit"}
 
 
 def correctness_cell(by, variant):
@@ -442,7 +492,9 @@ def correctness_cell(by, variant):
     return text
 
 
-def slo_rows(by, scenarios):
+def slo_rows(by, scenarios, prefix=""):
+    """prefix "result_" gives the verdict on the result-ready basis."""
+    fields = {"overall": f"slo_{prefix}overall", "steady": f"slo_{prefix}steady", "failure": f"slo_{prefix}failure"}
     rows = []
     for scenario in scenarios:
         cells = []
@@ -452,10 +504,10 @@ def slo_rows(by, scenarios):
                 cells.append("NOT RUN")
                 continue
             cells.append(" · ".join([
-                f"overall {combined_status([m['slo_overall'] for m in ms])}",
+                f"overall {combined_status([m[fields['overall']] for m in ms])}",
                 f"correctness {combined_status([m['correctness'] for m in ms])}",
-                f"steady {combined_status([m['slo_steady'] for m in ms])}",
-                f"failure-window {combined_status([m['slo_failure'] for m in ms])}",
+                f"steady {combined_status([m[fields['steady']] for m in ms])}",
+                f"failure-window {combined_status([m[fields['failure']] for m in ms])}",
             ]))
         rows.append((scenario, cells))
     return rows
@@ -571,7 +623,7 @@ def html_report(metrics, by, scenarios, runs_by_id, not_run, results_text):
            "<h1>Kafka Streams vs Redis aggregation benchmark</h1>",
            "<p class='key'><span class='k-a1'>A1 Kafka Streams, streams protocol</span><span class='k-a2'>A2 Kafka Streams, classic protocol</span>"
            "<span class='k-b'>B Kafka consumers + Redis</span></p>",
-           f"<p class='muted'>Generated {now} from {len(metrics)} runs in <code>results/runs</code>. "
+           f"<p class='muted'>Generated {now} from {len(metrics)} runs in <code>{html.escape(RESULTS_REL)}/runs</code>. "
            "Values are median [min–max] (n repetitions); latency is end-to-end from the broker append time of the "
            "latest required fragment to the durable PostgreSQL commit, exact percentiles over all actions. "
            "“Worst path” is the highest of the INDIVIDUAL, STAGE2 and FINAL paths. Runs with correctness FAIL are "
@@ -586,23 +638,31 @@ def html_report(metrics, by, scenarios, runs_by_id, not_run, results_text):
         out.append(f"<tr><td>{html.escape(label)}</td>" + "".join(f"<td>{html.escape(c)}</td>" for c in cells) + "</tr>")
     out.append("</table></div>")
 
-    rows = disruption_rows(by)
-    if rows:
-        out.append("<h2>Late events per disruption</h2><div class='wrap'><table><tr><th>One disruption</th><th>Measure</th>" +
-                   "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
+    bases = ["result_", ""] if has_result_basis(metrics) else [""]
+    tables = [(prefix, disruption_rows(by, prefix)) for prefix in bases]
+    for prefix, rows in tables:
+        if not rows:
+            continue
+        out.append(f"<h2>Late events per disruption ({html.escape(BASIS_TITLES[prefix])})</h2><div class='wrap'><table>"
+                   "<tr><th>One disruption</th><th>Measure</th>" + "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
         previous = None
         for label, measure, cells in rows:
             out.append(f"<tr><td>{html.escape(label) if label != previous else ''}</td><td>{html.escape(measure)}</td>" +
                        "".join(f"<td>{html.escape(c)}</td>" for c in cells) + "</tr>")
             previous = label
-        out.append(f"</table></div><p class='muted'>{html.escape(DISRUPTION_NOTE)}</p>")
+        out.append("</table></div>")
+    if any(rows for _, rows in tables):
+        out.append(f"<p class='muted'>{html.escape(DISRUPTION_NOTE)}</p>")
 
-    out.append("<h2>SLO evaluation (p99.95 ≤ 500 ms on every path)</h2><div class='wrap'><table><tr><th>Scenario</th>" +
-               "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
-    for scenario, cells in slo_rows(by, scenarios):
-        out.append(f"<tr><td>{html.escape(scenario)}</td>" + "".join(
-            f"<td class='{status_class(c)}'>{html.escape(c)}</td>" for c in cells) + "</tr>")
-    out.append("</table></div><p class='muted'>overall: PASS only if the offered load was achieved, correctness "
+    for prefix in bases:
+        title = "SLO evaluation (p99.95 ≤ 500 ms on every path" + (f"; {BASIS_TITLES[prefix]})" if len(bases) > 1 else ")")
+        out.append(f"<h2>{html.escape(title)}</h2><div class='wrap'><table><tr><th>Scenario</th>" +
+                   "".join(f"<th>{SHORT[v]}</th>" for v in VARIANTS) + "</tr>")
+        for scenario, cells in slo_rows(by, scenarios, prefix):
+            out.append(f"<tr><td>{html.escape(scenario)}</td>" + "".join(
+                f"<td class='{status_class(c)}'>{html.escape(c)}</td>" for c in cells) + "</tr>")
+        out.append("</table></div>")
+    out.append("<p class='muted'>overall: PASS only if the offered load was achieved, correctness "
                "passed, and both steady-state and failure-window p99.95 met the SLO; INCONCLUSIVE when the load was "
                "not reached, the node was CPU-saturated (p95 &gt; 90%), a window had too few samples, or the run did "
                "not drain.</p>")
@@ -729,7 +789,7 @@ def results_md(metrics, by, scenarios, not_run):
     lines = ["# Results", "",
              f"_Generated by `scripts/report.sh` on {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} from "
              f"{len(metrics)} runs. Do not edit by hand: every statement below is derived from the saved run data "
-             "(`results/runs/*/verification.json`). See `results/report.html` for graphs and per-run tables._", ""]
+             f"(`{RESULTS_REL}/runs/*/verification.json`). See `{RESULTS_REL}/report.html` for graphs and per-run tables._", ""]
     if not metrics:
         lines += ["**No benchmark runs have been executed yet.** All scenarios: NOT RUN.", ""]
         return "\n".join(lines)
@@ -739,22 +799,32 @@ def results_md(metrics, by, scenarios, not_run):
     for label, cells in main_table_rows(by):
         lines.append(f"| {label} | " + " | ".join(cells) + " |")
     lines += ["", "Values: median [min–max] (n repetitions). “Worst path” = highest p99.95 among INDIVIDUAL, STAGE2 "
-                  "and FINAL actions. Latency is end-to-end to the durable database commit.", ""]
+                  "and FINAL actions. End to end = to the durable database commit. Result ready = to the moment the "
+                  "result exists before it is persisted (executor pickup; for final aggregates pickup + ML inference), "
+                  "i.e. without the persistence step; where both are shown, result ready is the primary basis.", ""]
 
-    rows = disruption_rows(by)
-    if rows:
-        lines += ["## Late events per disruption", "", "| One disruption | Measure | " + " | ".join(SHORT[v] for v in VARIANTS)
-                  + " |", "|---|---|" + "---|" * len(VARIANTS)]
+    bases = ["result_", ""] if has_result_basis(metrics) else [""]
+    tables = [(prefix, disruption_rows(by, prefix)) for prefix in bases]
+    for prefix, rows in tables:
+        if not rows:
+            continue
+        lines += [f"## Late events per disruption ({BASIS_TITLES[prefix]})", "",
+                  "| One disruption | Measure | " + " | ".join(SHORT[v] for v in VARIANTS) + " |",
+                  "|---|---|" + "---|" * len(VARIANTS)]
         previous = None
         for label, measure, cells in rows:
             lines.append(f"| {label if label != previous else ''} | {measure} | " + " | ".join(cells) + " |")
             previous = label
-        lines += ["", DISRUPTION_NOTE, ""]
+        lines.append("")
+    if any(rows for _, rows in tables):
+        lines += [DISRUPTION_NOTE, ""]
 
-    lines += ["## SLO evaluation", "", "| Scenario | " + " | ".join(SHORT[v] for v in VARIANTS) + " |", "|---|" + "---|" * 3]
-    for scenario, cells in slo_rows(by, scenarios):
-        lines.append(f"| {scenario} | " + " | ".join(cells) + " |")
-    lines.append("")
+    for prefix in bases:
+        title = "SLO evaluation" + (f" ({BASIS_TITLES[prefix]})" if len(bases) > 1 else "")
+        lines += [f"## {title}", "", "| Scenario | " + " | ".join(SHORT[v] for v in VARIANTS) + " |", "|---|" + "---|" * 3]
+        for scenario, cells in slo_rows(by, scenarios, prefix):
+            lines.append(f"| {scenario} | " + " | ".join(cells) + " |")
+        lines.append("")
     executed = {k for k in by}
     missing = [f"{s}/{v}" for s in SCENARIO_ORDER for v in VARIANTS
                if (s, v) not in executed and not (s.startswith("redis-") and v != "b")]
@@ -765,7 +835,9 @@ def results_md(metrics, by, scenarios, not_run):
             lines.append(f"- {s}/{v}: {r}")
         lines.append("")
 
-    lines += ["## Findings (derived from the data above)", ""]
+    lines += ["## Findings (derived from the data above)", "",
+              "Findings compare only runs with correctness PASS, achieved load and no CPU saturation; the tables above "
+              "include every run without a correctness failure, so a median here can differ from the table.", ""]
     clear_winners = {}  # (scenario, key) -> variant ahead with non-overlapping ranges and >= 10% difference, else None
 
     def best(scenario, key, label, lower_is_better=True):
@@ -789,7 +861,19 @@ def results_md(metrics, by, scenarios, not_run):
         return (f"- **{label}:** {SHORT[b_v]} ({fmt(b_val, 1)}) ahead of {SHORT[r_v]} ({fmt(r_val, 1)}), "
                 f"difference {rel:.0%}, non-overlapping repetition ranges.")
 
-    lines.append(best("steady", "steady_p9995", "Best steady-state latency (S1 p99.95 worst path, ms)"))
+    if has_result_basis(metrics):
+        lines.append(best("steady", "result_steady_p9995", "Best steady-state latency, result ready (S1 p99.95 worst path, ms)"))
+        for scenario, label in (("rolling", "Lowest rolling-upgrade latency, result ready (S2 p99.95, ms)"),
+                                ("abrupt-pod", "Lowest abrupt-failure latency, result ready (S3 p99.95, ms)"),
+                                ("cold-pod", "Lowest cold-replacement latency, result ready (S4 p99.95, ms)"),
+                                ("rescheduling", "Lowest rescheduling latency, result ready (S5 p99.95, ms)")):
+            lines.append(best(scenario, "result_measure_p9995", label))
+        for scenario, label in (("rolling", "Fewest late events added per rollout, result ready (S2)"),
+                                ("abrupt-pod", "Fewest late events added per abrupt pod failure, result ready (S3)"),
+                                ("cold-pod", "Fewest late events added per cold pod replacement, result ready (S4)")):
+            if any(m.get("result_added_late_events") is not None for v in VARIANTS for m in by.get((scenario, v), [])):
+                lines.append(best(scenario, "result_added_late_events", label))
+    lines.append(best("steady", "steady_p9995", "Best steady-state latency, end to end (S1 p99.95 worst path, ms)"))
     lines.append(best("steady", "aggregation_only_steady_p9995",
                       "Lowest aggregation-only latency (S1 p99.95, append → executor pickup, ms)"))
     lines.append(best("steady", "processed_per_s", "Highest sustained throughput (S1, fragments/s)", lower_is_better=False))
@@ -854,9 +938,15 @@ def results_md(metrics, by, scenarios, not_run):
                   "(extra broker load and RocksDB memory in the aggregator pods); B pays with a separate Redis server.", ""]
 
     lines += ["## Recommendation", ""]
+    # Primary basis: result ready (without persistence) when the runs have it, else end to end.
+    primary = "result_" if has_result_basis(metrics) else ""
+    measure_key, steady_key, slo_key = f"{primary}measure_p9995", f"{primary}steady_p9995", f"slo_{primary}overall"
+    if primary:
+        lines += ["Basis: result-ready latency (to the moment the result exists, without the persistence step); the "
+                  "end-to-end figures are in the tables above.", ""]
     verdicts = {}
     for v in VARIANTS:
-        statuses = [m["slo_overall"] for (s, vv), lst in by.items() if vv == v and s not in ("smoke", "medium") for m in lst]
+        statuses = [m[slo_key] for (s, vv), lst in by.items() if vv == v and s not in ("smoke", "medium") for m in lst]
         verdicts[v] = combined_status(statuses)
     passing = [v for v in VARIANTS if verdicts[v] == "PASS"]
     if all(verdicts[v] == "NOT RUN" for v in VARIANTS):
@@ -871,8 +961,8 @@ def results_md(metrics, by, scenarios, not_run):
         lines.append("No variant met the 500 ms p99.95 SLO in every executed target-load scenario (" +
                      ", ".join(f"{SHORT[v]}: {verdicts[v]}" for v in VARIANTS) +
                      "), so none can be recommended as is for the stated requirement.")
-        disruption = [sc for sc in ("rolling", "abrupt-pod", "cold-pod", "rescheduling") if (sc, "measure_p9995") in clear_winners]
-        leaders = {clear_winners[(sc, "measure_p9995")] for sc in disruption}
+        disruption = [sc for sc in ("rolling", "abrupt-pod", "cold-pod", "rescheduling") if (sc, measure_key) in clear_winners]
+        leaders = {clear_winners[(sc, measure_key)] for sc in disruption}
         if disruption and len(leaders) == 1 and None not in leaders:
             leader = leaders.pop()
             lines += ["", f"Relative to each other, **{SHORT[leader]}** had the lowest p99.95 in every executed pod-disruption "
@@ -886,7 +976,7 @@ def results_md(metrics, by, scenarios, not_run):
                           "rather than the design."]
         streams_lead = []
         for sc in ("rolling", "abrupt-pod", "cold-pod", "rescheduling"):
-            pair = [summarize([m["measure_p9995"] for m in by.get((sc, v), []) if m["correctness"] == "PASS"
+            pair = [summarize([m[measure_key] for m in by.get((sc, v), []) if m["correctness"] == "PASS"
                                and m["load_achieved"] and not m["saturated"]]) for v in ("a1", "a2")]
             if all(pair):
                 (a1, a2) = pair
@@ -901,7 +991,7 @@ def results_md(metrics, by, scenarios, not_run):
             lines += ["", f"Between the two Kafka Streams variants (identical code, different rebalance protocol): "
                           f"{SHORT['a2']} was clearly ahead in {counts['a2']} and {SHORT['a1']} in {counts['a1']} of "
                           f"{len(streams_lead)} pod-disruption scenarios (same rule: non-overlapping ranges, ≥ 10%)."]
-        steady = clear_winners.get(("steady", "steady_p9995"), "missing")
+        steady = clear_winners.get(("steady", steady_key), "missing")
         if steady is None:
             lines += ["", "Steady-state (S1) end-to-end tails do not separate the variants (overlapping ranges). Variant "
                           "differences inside the aggregation step are visible in the aggregation-only latency row; "
@@ -916,7 +1006,9 @@ def results_md(metrics, by, scenarios, not_run):
               "- All timestamps come from the same node clock; cross-machine clock skew is not present here but would be "
               "in production.",
               "- All variants write their actions to one shared PostgreSQL instance on the same VM, so stalls of that "
-              "write path appear in every variant's end-to-end latency (aggregation-only latency excludes it).",
+              "write path appear in every variant's end-to-end latency (result-ready and aggregation-only latency "
+              "exclude it). Result ready omits the publishing step that replaces persistence in production; in A it "
+              "already includes the transactional Kafka hop to the executor, in B no Kafka publish at all.",
               "- Steady and failure windows are assigned by the broker append time of an action's source fragment; an "
               "action appended shortly before a fault and delayed by it counts as steady. Whole-window figures (used for "
               "S2–S5 above) do not depend on this rule; its effect per run is quantified by "

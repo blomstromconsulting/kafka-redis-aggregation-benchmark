@@ -1,0 +1,3 @@
+22:44:44 chaos: waiting 120.7s until measurement + 60s
+22:46:45 chaos: injecting redis-restart
+22:46:48 chaos: done (redis-restart)

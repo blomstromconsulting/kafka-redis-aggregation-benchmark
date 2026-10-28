@@ -1,0 +1,32 @@
+runId: "state-10s-a1-r1-1027200949"
+variant: "a1"
+images: {tag: "local"}
+kafka: {partitions: 12, replicationFactor: 1}
+aggregator:
+  build: "jvm"
+  replicas: 3
+  groupSessionTimeoutMs: 10000
+  groupHeartbeatIntervalMs: 250
+  redis: {uri: "redis://redis:6379", replayWindow: "70s"}
+persistence:
+  faults: {errorBeforeRate: 0, errorAfterCommitRate: 0}
+ml: {profile: "fixed", latencyMs: 50, errorRate: 0}
+generator:
+  scenario: "state-10s"
+  repetition: 1
+  seed: 42
+  eventRate: 6000
+  warmupSeconds: 60
+  rampSeconds: 30
+  durationSeconds: 240
+  payloadSizeA: 200
+  payloadSizeB: 200
+  payloadSizeC: 400
+  correlationWindowMs: 10000
+  windowDistribution: "uniform"
+  outOfOrderPercent: 10
+  duplicatePercent: 2
+  duplicateDelayMaxMs: 2000
+  missingPercent: 1
+  stalePercent: 0
+  inferencePercent: 100

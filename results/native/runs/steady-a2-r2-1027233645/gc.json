@@ -1,0 +1,34 @@
+{
+  "source": "scripts/lib/gc_pauses.py",
+  "aggregator": {
+    "pauses": 2457,
+    "maxPauseMs": 17.577,
+    "p99PauseMs": 7.873,
+    "totalPauseMs": 5151.8,
+    "pausesOver100ms": 0,
+    "pods": 3
+  },
+  "pods": {
+    "aggregator-55566f7d5-gwlpn": {
+      "pauses": 853,
+      "maxPauseMs": 17.007,
+      "p99PauseMs": 7.829,
+      "totalPauseMs": 1805.6,
+      "pausesOver100ms": 0
+    },
+    "aggregator-55566f7d5-h9qx7": {
+      "pauses": 804,
+      "maxPauseMs": 17.577,
+      "p99PauseMs": 7.656,
+      "totalPauseMs": 1614.3,
+      "pausesOver100ms": 0
+    },
+    "aggregator-55566f7d5-rqwzt": {
+      "pauses": 800,
+      "maxPauseMs": 16.374,
+      "p99PauseMs": 8.05,
+      "totalPauseMs": 1731.9,
+      "pausesOver100ms": 0
+    }
+  }
+}

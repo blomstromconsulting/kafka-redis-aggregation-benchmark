@@ -1,0 +1,429 @@
+{
+  "runId" : "steady-a1-r3-1028025412",
+  "variant" : "a1",
+  "scenario" : "steady",
+  "repetition" : 3,
+  "runStatus" : "COMPLETED",
+  "sloMs" : 500,
+  "config" : {
+    "plan" : {
+      "seed" : 42,
+      "eventRate" : 6000.0,
+      "partitions" : 12,
+      "rampSeconds" : 30,
+      "payloadSizeA" : 200,
+      "payloadSizeB" : 200,
+      "payloadSizeC" : 400,
+      "stalePercent" : 0.0,
+      "warmupSeconds" : 60,
+      "missingPercent" : 1.0,
+      "durationSeconds" : 300,
+      "duplicatePercent" : 2.0,
+      "inferencePercent" : 100.0,
+      "outOfOrderPercent" : 10.0,
+      "hotTrafficFraction" : 0.0,
+      "windowDistribution" : "uniform",
+      "correlationWindowMs" : 1000,
+      "duplicateDelayMaxMs" : 2000,
+      "hotPartitionFraction" : 0.0
+    },
+    "variant" : "a1",
+    "scenario" : "steady",
+    "lagGroups" : "aggbench-a1-steady-a1-r3-1028025412:aggbench.steady-a1-r3-1028025412.ingress,aggbench-a1-steady-a1-r3-1028025412-intents:aggbench.steady-a1-r3-1028025412.actions",
+    "ingressTopic" : "aggbench.steady-a1-r3-1028025412.ingress"
+  },
+  "correctness" : {
+    "finalAggregates" : {
+      "expected" : 683731,
+      "observed" : 683731,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "inference_presence_mismatch" : 0,
+      "persisted_for_incomplete" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0,
+      "wrong_inference_score" : 0
+    },
+    "individualActions" : {
+      "expected" : 2065125,
+      "observed" : 2065125,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "duplicate_attempts" : 0,
+      "unexpected" : 0
+    },
+    "stage2Actions" : {
+      "expected" : 686058,
+      "observed" : 686058,
+      "missing" : 0,
+      "wrong_content" : 0,
+      "persisted_without_a_and_b" : 0,
+      "duplicate_attempts" : 0,
+      "unknown_correlation_id" : 0
+    },
+    "rejectedInconsistentDuplicates" : 0,
+    "incompleteInputSequences" : {
+      "mask_3" : 2327,
+      "mask_5" : 2319,
+      "mask_6" : 2320
+    },
+    "inputVariations" : {
+      "with_duplicate" : 14049,
+      "with_stale_version" : 0,
+      "out_of_order" : 69454,
+      "requires_inference" : 690697
+    },
+    "sendFailures" : 0,
+    "failures" : [ ],
+    "status" : "PASS"
+  },
+  "load" : {
+    "requestedRate" : 6000.0,
+    "achievedRateMeasure" : 6000.79,
+    "maxScheduleLagMsMeasure" : 1675,
+    "eventsSent" : 2079174,
+    "eventsAcked" : 2079174,
+    "sendFailures" : 0,
+    "drained" : true,
+    "loadAchieved" : false
+  },
+  "samples" : 3434914,
+  "faults" : 0,
+  "latency" : {
+    "measure" : {
+      "INDIVIDUAL" : {
+        "count" : 1787978,
+        "p50" : 79.6,
+        "p95" : 280.68,
+        "p99" : 1245.4,
+        "p99_9" : 2336.75,
+        "p99_95" : 2554.1,
+        "p99_99" : 2801.82,
+        "max" : 2946.96,
+        "overSlo" : 45587,
+        "overSloFraction" : 0.025496398725263957
+      },
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 79.66,
+        "p95" : 280.38,
+        "p99" : 1251.63,
+        "p99_9" : 2330.67,
+        "p99_95" : 2554.11,
+        "p99_99" : 2801.96,
+        "max" : 2944.96,
+        "overSlo" : 15186,
+        "overSloFraction" : 0.02556569960555489
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 130.26,
+        "p95" : 320.86,
+        "p99" : 941.55,
+        "p99_9" : 2477.49,
+        "p99_95" : 2665.69,
+        "p99_99" : 2948.7,
+        "max" : 3140.7,
+        "overSlo" : 16044,
+        "overSloFraction" : 0.027102907937280183
+      },
+      "ALL" : {
+        "count" : 2973943,
+        "p50" : 89.22,
+        "p95" : 290.02,
+        "p99" : 1192.53,
+        "p99_9" : 2363.38,
+        "p99_95" : 2579.81,
+        "p99_99" : 2831.82,
+        "max" : 3140.7,
+        "overSlo" : 76817,
+        "overSloFraction" : 0.025830017589442703
+      }
+    },
+    "steady" : {
+      "INDIVIDUAL" : {
+        "count" : 1787978,
+        "p50" : 79.6,
+        "p95" : 280.68,
+        "p99" : 1245.4,
+        "p99_9" : 2336.75,
+        "p99_95" : 2554.1,
+        "p99_99" : 2801.82,
+        "max" : 2946.96,
+        "overSlo" : 45587,
+        "overSloFraction" : 0.025496398725263957
+      },
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 79.66,
+        "p95" : 280.38,
+        "p99" : 1251.63,
+        "p99_9" : 2330.67,
+        "p99_95" : 2554.11,
+        "p99_99" : 2801.96,
+        "max" : 2944.96,
+        "overSlo" : 15186,
+        "overSloFraction" : 0.02556569960555489
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 130.26,
+        "p95" : 320.86,
+        "p99" : 941.55,
+        "p99_9" : 2477.49,
+        "p99_95" : 2665.69,
+        "p99_99" : 2948.7,
+        "max" : 3140.7,
+        "overSlo" : 16044,
+        "overSloFraction" : 0.027102907937280183
+      },
+      "ALL" : {
+        "count" : 2973943,
+        "p50" : 89.22,
+        "p95" : 290.02,
+        "p99" : 1192.53,
+        "p99_9" : 2363.38,
+        "p99_95" : 2579.81,
+        "p99_99" : 2831.82,
+        "max" : 3140.7,
+        "overSlo" : 76817,
+        "overSloFraction" : 0.025830017589442703
+      }
+    },
+    "failure" : { },
+    "aggregationOnly" : {
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 66.81,
+        "p95" : 136.36,
+        "p99" : 219.26,
+        "p99_9" : 1028.09,
+        "p99_95" : 1697.65,
+        "p99_99" : 2064.9,
+        "max" : 2229.29,
+        "overSlo" : 2458,
+        "overSloFraction" : 0.00413805410446819
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 66.8,
+        "p95" : 136.68,
+        "p99" : 219.31,
+        "p99_9" : 1028.18,
+        "p99_95" : 1724.84,
+        "p99_99" : 2086.79,
+        "max" : 2225.98,
+        "overSlo" : 2442,
+        "overSloFraction" : 0.004125236922390813
+      }
+    },
+    "aggregationOnlySteady" : {
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 66.81,
+        "p95" : 136.36,
+        "p99" : 219.26,
+        "p99_9" : 1028.09,
+        "p99_95" : 1697.65,
+        "p99_99" : 2064.9,
+        "max" : 2229.29,
+        "overSlo" : 2458,
+        "overSloFraction" : 0.00413805410446819
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 66.8,
+        "p95" : 136.68,
+        "p99" : 219.31,
+        "p99_9" : 1028.18,
+        "p99_95" : 1724.84,
+        "p99_99" : 2086.79,
+        "max" : 2225.98,
+        "overSlo" : 2442,
+        "overSloFraction" : 0.004125236922390813
+      }
+    },
+    "firstFragmentToFinal" : {
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 849.71,
+        "p95" : 1149.0,
+        "p99" : 1635.53,
+        "p99_9" : 3517.55,
+        "p99_95" : 3717.7,
+        "p99_99" : 3985.7,
+        "max" : 4277.23,
+        "overSlo" : 513933,
+        "overSloFraction" : 0.8681799292526936
+      }
+    },
+    "resultMeasure" : {
+      "INDIVIDUAL" : {
+        "count" : 1787978,
+        "p50" : 66.77,
+        "p95" : 136.49,
+        "p99" : 219.08,
+        "p99_9" : 1028.13,
+        "p99_95" : 1713.57,
+        "p99_99" : 2069.88,
+        "max" : 2236.29,
+        "overSlo" : 7361,
+        "overSloFraction" : 0.004116941036187246
+      },
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 66.81,
+        "p95" : 136.36,
+        "p99" : 219.26,
+        "p99_9" : 1028.09,
+        "p99_95" : 1697.65,
+        "p99_99" : 2064.9,
+        "max" : 2229.29,
+        "overSlo" : 2458,
+        "overSloFraction" : 0.00413805410446819
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 119.82,
+        "p95" : 193.43,
+        "p99" : 284.23,
+        "p99_9" : 1125.71,
+        "p99_95" : 1801.84,
+        "p99_99" : 2139.23,
+        "max" : 2279.75,
+        "overSlo" : 2625,
+        "overSloFraction" : 0.004434376298638773
+      },
+      "ALL" : {
+        "count" : 2973943,
+        "p50" : 77.04,
+        "p95" : 161.4,
+        "p99" : 242.31,
+        "p99_9" : 1030.86,
+        "p99_95" : 1717.81,
+        "p99_99" : 2082.8,
+        "max" : 2279.75,
+        "overSlo" : 12444,
+        "overSloFraction" : 0.004184343815601039
+      }
+    },
+    "resultSteady" : {
+      "INDIVIDUAL" : {
+        "count" : 1787978,
+        "p50" : 66.77,
+        "p95" : 136.49,
+        "p99" : 219.08,
+        "p99_9" : 1028.13,
+        "p99_95" : 1713.57,
+        "p99_99" : 2069.88,
+        "max" : 2236.29,
+        "overSlo" : 7361,
+        "overSloFraction" : 0.004116941036187246
+      },
+      "STAGE2" : {
+        "count" : 593999,
+        "p50" : 66.81,
+        "p95" : 136.36,
+        "p99" : 219.26,
+        "p99_9" : 1028.09,
+        "p99_95" : 1697.65,
+        "p99_99" : 2064.9,
+        "max" : 2229.29,
+        "overSlo" : 2458,
+        "overSloFraction" : 0.00413805410446819
+      },
+      "FINAL" : {
+        "count" : 591966,
+        "p50" : 119.82,
+        "p95" : 193.43,
+        "p99" : 284.23,
+        "p99_9" : 1125.71,
+        "p99_95" : 1801.84,
+        "p99_99" : 2139.23,
+        "max" : 2279.75,
+        "overSlo" : 2625,
+        "overSloFraction" : 0.004434376298638773
+      },
+      "ALL" : {
+        "count" : 2973943,
+        "p50" : 77.04,
+        "p95" : 161.4,
+        "p99" : 242.31,
+        "p99_9" : 1030.86,
+        "p99_95" : 1717.81,
+        "p99_99" : 2082.8,
+        "max" : 2279.75,
+        "overSlo" : 12444,
+        "overSloFraction" : 0.004184343815601039
+      }
+    },
+    "resultFailure" : { }
+  },
+  "throughput" : {
+    "individualActionsPerSecondMean" : 5959.926666666666,
+    "individualActionsPerSecondMedian" : 5955,
+    "individualActionsPerSecondMin" : 262,
+    "producerAckedPerSecondMeasure" : 6000.79,
+    "producerMaxScheduleLagMsMeasure" : 1675,
+    "producerRequestedRateMeasure" : 6000.0,
+    "producerAchievedRateWholeRun" : 5736.588055261184
+  },
+  "lag" : {
+    "aggbench-a1-steady-a1-r3-1028025412" : {
+      "maxOldestUnprocessedAgeMs" : 213,
+      "maxLag" : 4088,
+      "p95Lag" : 611,
+      "medianLag" : 358
+    },
+    "aggbench-a1-steady-a1-r3-1028025412-intents" : {
+      "maxOldestUnprocessedAgeMs" : 2445,
+      "maxLag" : 23414,
+      "p95Lag" : 3525,
+      "medianLag" : 1698
+    }
+  },
+  "events" : {
+    "DRAINED" : {
+      "count" : 1
+    },
+    "MEASURE_END" : {
+      "count" : 1
+    },
+    "MEASURE_START" : {
+      "count" : 1
+    },
+    "PARTITION_PROCESSING_STARTED" : {
+      "count" : 12,
+      "maxMsSinceAssignment" : 11739,
+      "maxFirstRecordAgeMs" : 325
+    },
+    "SEND_END" : {
+      "count" : 1
+    },
+    "TASK_PROCESSING_STARTED" : {
+      "count" : 12,
+      "maxMsSinceTaskInit" : 10610,
+      "maxFirstRecordAgeMs" : 187
+    },
+    "WARMUP_START" : {
+      "count" : 1
+    }
+  },
+  "faultRecovery" : [ ],
+  "slo" : {
+    "loadAchieved" : false,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "reason" : "the requested offered load was not achieved",
+    "overall" : "INCONCLUSIVE"
+  },
+  "sloResultReady" : {
+    "loadAchieved" : false,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "NOT_APPLICABLE",
+    "reason" : "the requested offered load was not achieved",
+    "overall" : "INCONCLUSIVE"
+  }
+}

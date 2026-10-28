@@ -1,0 +1,13 @@
+{
+  "correctnessFailures" : [ ],
+  "runId" : "rolling-a2-r3-1028040824",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  },
+  "correctness" : "PASS"
+}

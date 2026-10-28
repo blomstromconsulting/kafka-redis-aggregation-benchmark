@@ -6,7 +6,7 @@ names the run it is based on; treat it as a hypothesis check, not as a benchmark
 
 ## 1. Kafka Streams tail latency at 6,000 fragments/s is a cluster-wide pause before executor pickup
 
-Run: `results/runs/steady-a1-r1-1026152213` (S1, A1). Similar pattern in the exploratory A2 run.
+Run: `results/archive/jdk21-hb1s/runs/steady-a1-r1-1026152213` (S1, A1). Similar pattern in the exploratory A2 run.
 
 - Worst-path p99.95 1,020 ms; aggregation-only (append → executor pickup) p99.95 ≈ 650 ms, so most of the tail
   arises before any downstream call.
@@ -15,7 +15,7 @@ Run: `results/runs/steady-a1-r1-1026152213` (S1, A1). Similar pattern in the exp
   append → pickup part (raw data: `latencies.csv.gz`, columns `ready_ms` vs `done_ms`):
 
   ```bash
-  gzip -dc results/runs/steady-a1-*/latencies.csv.gz | awk -F, 'NR>1 && $3>=127.5 && $3<128.5 && $4>500 {p[$2]++} END {for (k in p) print k, p[k]}'
+  gzip -dc results/archive/jdk21-hb1s/runs/steady-a1-*/latencies.csv.gz | awk -F, 'NR>1 && $3>=127.5 && $3<128.5 && $4>500 {p[$2]++} END {for (k in p) print k, p[k]}'
   ```
 - Ruled out as the cause for this run: PostgreSQL (persistence batch mean 4–10 ms during the episodes, see
   `resources.json` series `persistenceBatchMeanSeconds`), aggregator GC (max pause 37 ms), Kafka Streams commit
@@ -37,7 +37,7 @@ Run: `results/runs/steady-a1-r1-1026152213` (S1, A1). Similar pattern in the exp
 
 ## 2. S1 end-to-end tails in repetitions 2–3 come from the shared persistence path, in all variants
 
-Runs: `results/runs/steady-*-r2-*`, `steady-*-r3-*` (batch 2, 19:16–20:00 local time on 2026-10-26).
+Runs: `results/archive/jdk21-hb1s/runs/steady-*-r2-*`, `steady-*-r3-*` (batch 2, 19:16–20:00 local time on 2026-10-26).
 
 - B's S1 worst-path p99.95 rose from 651 ms (r1) to 2,077 / 2,413 ms (r2 / r3); A1 and A2 rose too. The
   over-SLO actions come in 1–2 s episodes that involve all 12 partitions.
@@ -57,7 +57,7 @@ Runs: `results/runs/steady-*-r2-*`, `steady-*-r3-*` (batch 2, 19:16–20:00 loca
   | steady-b-r3 | 81,865 | 0 | 81,865 |
 
   ```bash
-  for r in results/runs/steady-*; do gzip -dc $r/latencies.csv.gz | awk -F, -v run=$(basename $r) \
+  for r in results/archive/jdk21-hb1s/runs/steady-*; do gzip -dc $r/latencies.csv.gz | awk -F, -v run=$(basename $r) \
     'NR>1 && $3>=0 && $5>500 {o++; if ($4>=250) up++; else down++} END {print run, o, up+0, down+0}'; done
   ```
 - During the episodes the executors' persistence queue (`resources.json` series `persistenceQueueDepth`) jumps
@@ -87,7 +87,7 @@ the window) changes the steady-window worst-path p99.95 by more than 5 % in thre
 | state-60s-a2-r1-1026181211 | 1,329 ms | 1,176 ms |
 
 ```bash
-scripts/analysis/window_sensitivity.py results/runs/abrupt-pod-* results/runs/correctness-*
+scripts/analysis/window_sensitivity.py results/archive/jdk21-hb1s/runs/abrupt-pod-* results/archive/jdk21-hb1s/runs/correctness-*
 ```
 
 The remaining 3.1 s in `abrupt-pod-a1-r2` comes from a 7 s episode 30 s before the kill (seconds 29–37,
@@ -100,15 +100,15 @@ all campaign runs are evaluated identically.
 The first campaign export added the previous run's pods to the aggregator memory totals (kubelet samples carry
 explicit timestamps, so Prometheus returned deleted pods' last values for five minutes; e.g. A2 S1 showed
 4.6 GiB for three pods limited to 1.25 GiB each). After fixing `scripts/lib/prom_export.py`
-(see BENCHMARK-METHODOLOGY, Limitations), `resources.json` of every run in `results/runs`, `results/validation`
-and `results/exploratory` was re-exported from the same Prometheus data on 2026-10-26 (retention 3 days).
+(see BENCHMARK-METHODOLOGY, Limitations), `resources.json` of every run in `results/archive/jdk21-hb1s/runs`, `.../validation`
+and `.../exploratory` (then `results/runs`, `results/validation`, `results/exploratory`) was re-exported from the same Prometheus data on 2026-10-26 (retention 3 days).
 Only the resource group figures changed (aggregator memory in all runs; CPU and memory totals in runs where pods
 were replaced); timeline series differ at most by a few trailing points that had not been scraped yet when the
 original export ran.
 
 ## 5. In variant B, a rollout's late events come from the new pods' first 10–25 s, not from moving partitions
 
-Runs: `results/runs/rolling-b-r{1,2,3}-*` (S2, B, Java 21 JVM). Every late event (INDIVIDUAL action over 500 ms)
+Runs: `results/archive/jdk21-hb1s/runs/rolling-b-r{1,2,3}-*` (S2, B, Java 21 JVM). Every late event (INDIVIDUAL action over 500 ms)
 appended in the minute after the rollout started is attributed to the pod that picked it up and to the stage where
 the time went (`scripts/analysis/late_event_causes.py`):
 
@@ -140,7 +140,7 @@ Hypothesis, consistent with the above but not proven: JIT warm-up of a freshly s
 compiled code, compiler threads competing for the 2-core limit). CPU throttling was not exported and is not
 verified. Test: ADR 0005 (native executables have no warm-up phase).
 
-Reproduce: `./scripts/analysis/late_event_causes.py results/runs/rolling-b-r*` (needs `latencies.csv.gz`, local
+Reproduce: `./scripts/analysis/late_event_causes.py results/archive/jdk21-hb1s/runs/rolling-b-r*` (needs `latencies.csv.gz`, local
 only); queue and CPU series are in each run's `resources.json` (`series`, `pods`).
 
 ## 6. Theory test: native executables remove B's rollout delay; A gains little

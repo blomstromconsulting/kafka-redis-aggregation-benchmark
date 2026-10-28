@@ -56,9 +56,11 @@ def analyse(run_dir, lo, hi):
     counts = collections.Counter()
     by_age = collections.Counter()
     with gzip.open(os.path.join(run_dir, "latencies.csv.gz"), "rt") as handle:
-        next(handle)
+        column = {name: i for i, name in enumerate(next(handle).rstrip("\n").split(","))}
         for line in handle:
-            kind, partition, append_s, ready_ms, done_ms, _ = line.split(",")
+            fields = line.rstrip("\n").split(",")
+            kind, partition, append_s, ready_ms, done_ms = (fields[column[name]] for name in
+                                                            ("kind", "partition", "append_s", "ready_ms", "done_ms"))
             if kind != "INDIVIDUAL" or float(done_ms) <= SLO_MS:
                 continue
             append_s = float(append_s)

@@ -1,0 +1,13 @@
+{
+  "runId" : "cold-pod-b-r1-1027174142",
+  "correctnessFailures" : [ ],
+  "correctness" : "PASS",
+  "slo" : {
+    "loadAchieved" : true,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "latency SLO missed (correctness PASS)",
+    "overall" : "FAIL"
+  }
+}

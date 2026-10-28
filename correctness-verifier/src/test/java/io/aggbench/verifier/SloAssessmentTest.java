@@ -41,6 +41,20 @@ class SloAssessmentTest {
     }
 
     @Test
+    void resultReadyBasisIsAssessedFromItsOwnWindows() {
+        Map<String, Object> latency = new HashMap<>();
+        latency.put("steady", window(900, 5000));
+        latency.put("failure", window(4000, 5000));
+        latency.put("resultSteady", window(200, 5000));
+        latency.put("resultFailure", window(450, 5000));
+        Map<String, Object> performance = Map.of("latency", latency);
+        assertEquals("FAIL", SloAssessment.assess(Map.of("loadAchieved", true), Map.of("status", "PASS"), performance, 500)
+                .get("overall"));
+        assertEquals("PASS", SloAssessment.assess(Map.of("loadAchieved", true), Map.of("status", "PASS"), performance, 500,
+                "resultSteady", "resultFailure").get("overall"));
+    }
+
+    @Test
     void unreachedLoadIsInconclusiveAndCorrectnessFailureInvalidates() {
         assertEquals("INCONCLUSIVE", SloAssessment.assess(Map.of("loadAchieved", false), Map.of("status", "PASS"),
                 performance(window(100, 5000), Map.of()), 500).get("overall"));

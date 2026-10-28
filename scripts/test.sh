@@ -10,7 +10,8 @@ export JAVA_HOME="$(java25_home)"
 log "unit and integration tests"
 (cd "$ROOT" && mvn -B -q install)
 log "report generator self-check"
-python3 -m py_compile "$ROOT/scripts/report.py" "$ROOT/scripts/lib/prom_export.py" "$ROOT/scripts/analysis/window_sensitivity.py" \
+python3 -m py_compile "$ROOT/scripts/report.py" "$ROOT/scripts/lib/prom_export.py" "$ROOT/scripts/lib/gc_pauses.py" \
+  "$ROOT/scripts/analysis/window_sensitivity.py" \
   "$ROOT/scripts/analysis/late_event_causes.py" \
   "$ROOT/scripts/analysis/disruption_impact.py"
 for script in "$ROOT"/scripts/*.sh "$ROOT"/scripts/lib/*.sh; do bash -n "$script"; done

@@ -8,7 +8,7 @@ During the first smoke test the broker reported the built-in defaults (45 s sess
 rebalance delay) for a new streams group although the broker-level `group.streams.*` values were 10 s / 1 s.
 
 **Decision.** 10 s session timeout and 250 ms heartbeat for every group (1 s until 2026-10-27: every run in
-`results/runs`, `results/jdk25-jvm` and `results/jdk25-native`; each run's `values.yaml` records the value).
+`results/archive/jdk21-hb1s`, `results/jdk25-jvm` and `results/jdk25-native`; each run's `values.yaml` records the value).
 The heartbeat paces partition moves: a member that gives a partition up acknowledges at once, but the new owner
 learns of its assignment only on its next heartbeat, so each move paused its partition for 0–1 s
 (ANALYSIS-NOTES note 7). Classic: client config. Consumer: broker

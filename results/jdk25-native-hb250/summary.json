@@ -44,7 +44,20 @@
     "slo_failure": "FAIL",
     "added_late_events": 74815.3,
     "late_events_over_2s": 25557.0,
-    "late_events_over_10s": 0.0
+    "late_events_over_10s": 0.0,
+    "result_steady_p9995": null,
+    "result_measure_p9995": null,
+    "result_failure_p9995": null,
+    "result_recovery_s": null,
+    "result_max_partition_stall_ms": null,
+    "slo_result_overall": null,
+    "slo_result_steady": null,
+    "slo_result_failure": null,
+    "result_added_late_events": null,
+    "result_late_events_over_2s": null,
+    "result_late_events_over_10s": null,
+    "gc_max_pause_ms": null,
+    "gc_pauses_over_100ms": null
   },
   {
     "run": "rolling-a2-r1-1027135852",
@@ -91,7 +104,20 @@
     "slo_failure": "FAIL",
     "added_late_events": 94259.7,
     "late_events_over_2s": 21143.0,
-    "late_events_over_10s": 0.0
+    "late_events_over_10s": 0.0,
+    "result_steady_p9995": null,
+    "result_measure_p9995": null,
+    "result_failure_p9995": null,
+    "result_recovery_s": null,
+    "result_max_partition_stall_ms": null,
+    "slo_result_overall": null,
+    "slo_result_steady": null,
+    "slo_result_failure": null,
+    "result_added_late_events": null,
+    "result_late_events_over_2s": null,
+    "result_late_events_over_10s": null,
+    "gc_max_pause_ms": null,
+    "gc_pauses_over_100ms": null
   },
   {
     "run": "rolling-b-r1-1027140617",
@@ -138,7 +164,20 @@
     "slo_failure": "FAIL",
     "added_late_events": 7826.0,
     "late_events_over_2s": 0.0,
-    "late_events_over_10s": 0.0
+    "late_events_over_10s": 0.0,
+    "result_steady_p9995": null,
+    "result_measure_p9995": null,
+    "result_failure_p9995": null,
+    "result_recovery_s": null,
+    "result_max_partition_stall_ms": null,
+    "slo_result_overall": null,
+    "slo_result_steady": null,
+    "slo_result_failure": null,
+    "result_added_late_events": null,
+    "result_late_events_over_2s": null,
+    "result_late_events_over_10s": null,
+    "gc_max_pause_ms": null,
+    "gc_pauses_over_100ms": null
   },
   {
     "run": "rolling-b-r2-1027141330",
@@ -185,7 +224,20 @@
     "slo_failure": "FAIL",
     "added_late_events": 5886.7,
     "late_events_over_2s": 0.0,
-    "late_events_over_10s": 0.0
+    "late_events_over_10s": 0.0,
+    "result_steady_p9995": null,
+    "result_measure_p9995": null,
+    "result_failure_p9995": null,
+    "result_recovery_s": null,
+    "result_max_partition_stall_ms": null,
+    "slo_result_overall": null,
+    "slo_result_steady": null,
+    "slo_result_failure": null,
+    "result_added_late_events": null,
+    "result_late_events_over_2s": null,
+    "result_late_events_over_10s": null,
+    "gc_max_pause_ms": null,
+    "gc_pauses_over_100ms": null
   },
   {
     "run": "rolling-b-r3-1027142048",
@@ -232,6 +284,19 @@
     "slo_failure": "FAIL",
     "added_late_events": 10852.7,
     "late_events_over_2s": 0.0,
-    "late_events_over_10s": 0.0
+    "late_events_over_10s": 0.0,
+    "result_steady_p9995": null,
+    "result_measure_p9995": null,
+    "result_failure_p9995": null,
+    "result_recovery_s": null,
+    "result_max_partition_stall_ms": null,
+    "slo_result_overall": null,
+    "slo_result_steady": null,
+    "slo_result_failure": null,
+    "result_added_late_events": null,
+    "result_late_events_over_2s": null,
+    "result_late_events_over_10s": null,
+    "gc_max_pause_ms": null,
+    "gc_pauses_over_100ms": null
   }
 ]

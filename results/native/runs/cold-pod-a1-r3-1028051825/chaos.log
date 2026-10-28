@@ -1,0 +1,3 @@
+05:18:41 chaos: waiting 120.9s until measurement + 60s
+05:20:42 chaos: injecting delete-pod
+05:20:42 chaos: done (delete-pod)

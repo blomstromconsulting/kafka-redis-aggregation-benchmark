@@ -72,6 +72,7 @@ public final class VerifierMain {
             result.put("load", load);
             result.putAll(performance);
             result.put("slo", SloAssessment.assess(load, correctness, performance, sloMs));
+            result.put("sloResultReady", SloAssessment.assess(load, correctness, performance, sloMs, "resultSteady", "resultFailure"));
 
             ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
             mapper.writeValue(out.resolve("verification.json").toFile(), result);

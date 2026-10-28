@@ -1,0 +1,13 @@
+{
+  "runId" : "rescheduling-b-r3-1028055502",
+  "slo" : {
+    "loadAchieved" : false,
+    "correctness" : "PASS",
+    "steadyStateLatency" : "FAIL",
+    "failureWindowLatency" : "FAIL",
+    "reason" : "the requested offered load was not achieved",
+    "overall" : "INCONCLUSIVE"
+  },
+  "correctness" : "PASS",
+  "correctnessFailures" : [ ]
+}

@@ -10,7 +10,8 @@ import java.util.Map;
  *
  * <p>Latency target: p99.95 of every end-to-end path (INDIVIDUAL, STAGE2, FINAL) at most the SLO. Steady-state
  * and failure windows are assessed separately. Fewer than 2,000 samples in a window cannot support a p99.95
- * claim (the estimate would rest on a single sample) and yields INCONCLUSIVE.
+ * claim (the estimate would rest on a single sample) and yields INCONCLUSIVE. The same rules are applied a second
+ * time to the result-ready latency (without the persistence step), see {@link PerformanceAnalysis}.
  */
 final class SloAssessment {
 
@@ -19,15 +20,22 @@ final class SloAssessment {
     private SloAssessment() {
     }
 
-    @SuppressWarnings("unchecked")
+    /** End-to-end latency (to the durable commit). */
     static Map<String, Object> assess(Map<String, Object> load, Map<String, Object> correctness,
                                       Map<String, Object> performance, long sloMs) {
+        return assess(load, correctness, performance, sloMs, "steady", "failure");
+    }
+
+    /** Latency read from {@code latency.<steadyKey>} and {@code latency.<failureKey>}. */
+    @SuppressWarnings("unchecked")
+    static Map<String, Object> assess(Map<String, Object> load, Map<String, Object> correctness,
+                                      Map<String, Object> performance, long sloMs, String steadyKey, String failureKey) {
         Map<String, Object> latency = (Map<String, Object>) performance.get("latency");
         Map<String, Object> result = new LinkedHashMap<>();
         boolean loadOk = Boolean.TRUE.equals(load.get("loadAchieved"));
         String correctnessStatus = (String) correctness.get("status");
-        String steady = latencyStatus((Map<String, Object>) latency.get("steady"), sloMs);
-        Map<String, Object> failureWindow = (Map<String, Object>) latency.get("failure");
+        String steady = latencyStatus((Map<String, Object>) latency.get(steadyKey), sloMs);
+        Map<String, Object> failureWindow = (Map<String, Object>) latency.get(failureKey);
         String failure = failureWindow == null || failureWindow.isEmpty() ? "NOT_APPLICABLE" : latencyStatus(failureWindow, sloMs);
 
         result.put("loadAchieved", loadOk);

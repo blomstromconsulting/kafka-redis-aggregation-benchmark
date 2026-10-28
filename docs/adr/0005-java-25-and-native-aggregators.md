@@ -1,6 +1,6 @@
 # ADR 0005 – Java 25, and native aggregator executables as a second build
 
-**Status:** accepted (native build under evaluation; first results in ANALYSIS-NOTES note 6)
+**Status:** accepted (both builds measured in the final campaign of 2026-10-27/28; first results in ANALYSIS-NOTES note 6)
 
 **Context.** In variant B, about 85–89 % of the events delayed by a rollout are delayed while a freshly started JVM
 is still warming up (`docs/ANALYSIS-NOTES.md` note 5). A native executable is compiled ahead of time and has no
@@ -22,7 +22,11 @@ The original task fixed Java 21 and JVM mode; the change was requested explicitl
   id in `environment.txt`, and each build's runs go to their own results directory (`AGGBENCH_RESULTS`).
 
 **Consequences.**
-- The 68-run campaign in `results/runs` was measured on Java 21; new comparisons need a Java 25 JVM baseline.
+- The first 68-run campaign (now `results/archive/jdk21-hb1s`) was measured on Java 21. The final campaign ran every
+  local scenario with both builds on Java 25: `results/runs` (`docs/RESULTS.md`) and `results/native/runs`
+  (`results/native/RESULTS.md`). Native executables lowered the cost of planned pod moves (rollout, cold
+  replacement, rescheduling) for every variant and the aggregators' memory by about 36 % (A) and 67 % (B), but not
+  the cost of abrupt failures, which is dominated by failure detection (`docs/DISRUPTION-IMPACT.md`).
 - Native executables trade warm-up for a lower peak speed than fully warmed C2 code (Oracle GraalVM narrows the
   gap with ML-inferred profiles by default; recorded profiles (PGO) are not used yet).
 - JVM-specific metrics (JIT, some GC and memory pool series) are missing or differ in native runs.

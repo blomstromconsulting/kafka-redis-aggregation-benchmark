@@ -54,9 +54,10 @@ def analyse(run_dir):
     duration = float(env_value(os.path.join(run_dir, "scenario.env"), "DURATION_SECONDS"))
     split = {rule: {w: {k: [] for k in KINDS} for w in ("steady", "failure")} for rule in ("append", "overlap")}
     with gzip.open(os.path.join(run_dir, "latencies.csv.gz"), "rt") as handle:
-        next(handle)
+        column = {name: i for i, name in enumerate(next(handle).rstrip("\n").split(","))}
         for line in handle:
-            kind, _, append_s, _, done_ms, _ = line.rstrip("\n").split(",")
+            fields = line.rstrip("\n").split(",")
+            kind, append_s, done_ms = fields[column["kind"]], fields[column["append_s"]], fields[column["done_ms"]]
             append_s = float(append_s)
             if append_s < 0 or append_s >= duration:
                 continue

@@ -39,6 +39,7 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 ./scripts/benchmark.sh --scenario rescheduling --all           # S5 frequent pod rescheduling
 ./scripts/benchmark.sh --suite core --all                      # S1, S2, S3, S4, S5
 ./scripts/benchmark.sh --suite full --all --repetitions 5      # everything that fits the local profile
+./scripts/campaign.sh                                         # final campaign: full suite x JVM and native (~15 h)
 ./scripts/benchmark.sh --scenario steady --variant b --rate 9000 --duration 180 --replicas 3 --partitions 12
 ./scripts/report.sh
 ./scripts/verify-run.sh <run-id>  # re-run the independent verifier (raw rows are kept if verification failed)
@@ -51,7 +52,8 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 
 Native aggregators (ADR 0005): `./scripts/build.sh --native` additionally compiles A and B into native executables
 with Oracle GraalVM 25 and the G1 collector (images tagged `local-native`); run them with `--build native`, into a
-separate results directory so that JVM and native runs are never mixed:
+separate results directory so that JVM and native runs are never mixed (`campaign.sh` uses `results/` and
+`results/native/`; earlier campaigns are in `results/archive/`):
 
 ```bash
 AGGBENCH_RESULTS=$PWD/results/native ./scripts/benchmark.sh --scenario rolling --all --build native
@@ -92,7 +94,8 @@ Live view: `kubectl -n aggbench port-forward svc/grafana 3000` → http://localh
 - [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) – classes, topology, Lua function, acknowledgements
 - [docs/BENCHMARK-METHODOLOGY.md](docs/BENCHMARK-METHODOLOGY.md) – boundaries, fairness, scenarios, limitations
 - [docs/FAILURE-RECOVERY.md](docs/FAILURE-RECOVERY.md) – what happens on restart, kill, Redis loss
-- [docs/RESULTS.md](docs/RESULTS.md) – generated findings (only from executed runs)
+- [docs/RESULTS.md](docs/RESULTS.md) – generated findings (only from executed runs), JVM build;
+  [results/native/RESULTS.md](results/native/RESULTS.md) – the same for the native build
 - [docs/ANALYSIS-NOTES.md](docs/ANALYSIS-NOTES.md) – manual root-cause notes on specific runs, with evidence
 - [docs/DISRUPTION-IMPACT.md](docs/DISRUPTION-IMPACT.md) – late events per rollout and per pod failure, as decision input
 - [docs/adr/](docs/adr/) – architecture decision records
