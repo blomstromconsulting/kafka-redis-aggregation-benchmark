@@ -47,6 +47,7 @@ Each run prints `correctness PASS/FAIL` and its SLO class; artefacts are written
 ./scripts/analysis/disruption_impact.py --summary results/runs/<run> ...  # late events per rollout / pod failure
                                     # (--write saves <run>/disruption.json; benchmark.sh does it after every run)
 ./scripts/analysis/late_event_causes.py results/runs/<b-run> ...  # B: late events by pod and stage
+./scripts/analysis/daily_slo.py results/runs/{steady,rolling}-*  # p99.95 of a 12 h day with one rollout
 ./scripts/cleanup.sh            # remove the current run; --all also removes infrastructure and volumes
 ```
 

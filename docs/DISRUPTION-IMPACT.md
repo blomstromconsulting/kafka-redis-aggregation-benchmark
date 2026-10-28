@@ -3,6 +3,7 @@
 The p99.95 per window says how high the tail is, not how many events it contains. This note counts the events
 that one disruption pushes over the 500 ms SLO at 6,000 events/s: one rollout, one pod failure, one Redis restart.
 Counts add up, so they can be multiplied by how often each disruption happens and compared with an error budget.
+The section "A day with one rollout" turns them into the p99.95 of a 12-hour day of traffic.
 
 All figures come from the final campaign (2026-10-27/28: Java 25, 250 ms group heartbeat, Kafka broker limited to
 4 GiB), run once with each aggregator build: JVM `results/runs` (report `docs/RESULTS.md`) and native
@@ -116,8 +117,8 @@ Checks made on this data:
    rollout 16k–64k, A1 native rollout 28k–74k). B's range does not overlap either A range for any aggregator
    disruption, on either build. A1 and A2 overlap for rollouts and cold replacements; A1 is lower for abrupt
    failures and A2 for rescheduling, on both builds, with ranges that do not overlap.
-5. **Baseline noise**: on the result-ready basis B had no late event at all in any steady run on either build, and
-   the A variants 0–1,800 per minute. End to end, the shared PostgreSQL adds up to 20,000 per minute in every variant
+5. **Baseline noise**: on the result-ready basis B had 2 late events (both 500.7 ms, in one JVM run, 0.4 per
+   minute) in its six steady runs, and the A variants 0–1,800 per minute. End to end, the shared PostgreSQL adds up to 20,000 per minute in every variant
    (medians of the steady runs 1,100–9,100), which made B's small disruptions unresolvable on that basis (negative or near-zero medians); on the result-ready
    basis they resolve (B native rollout 0 [−1,233–14]).
 
@@ -173,8 +174,8 @@ month use 14.7 % / 9.7 % (A1), 12.1 % / 8.0 % (A2) and 2.8 % / 2.0 % (B) of the 
 
 Two conditions apply:
 
-- **Steady state must meet the SLO first.** On the result-ready basis B produced no late events in steady state on
-  either build. The A variants did, unevenly (median per month JVM / native: A1 15.9M / 7.6M, A2 4.5M / 0.65M, i.e.
+- **Steady state must meet the SLO first.** On the result-ready basis B produced almost no late events in steady
+  state: 2 in six runs, all in one JVM run (extrapolated 17,000 per month, 0.2 % of the budget). The A variants did, unevenly (median per month JVM / native: A1 15.9M / 7.6M, A2 4.5M / 0.65M, i.e.
   2.0× / 1.0× and 0.6× / 0.08× the budget), with single steady runs up to 10× the budget (JVM A2 77.7M). End to end,
   every variant uses 6–51× the budget in steady state from the shared persistence path alone.
 - **If the SLO is evaluated per short window** (for example p99.95 per 5 minutes), the count does not decide:
@@ -190,6 +191,56 @@ To make the count decision-grade:
 4. Use at least 5 repetitions wherever ranges overlap (A1 vs A2 for rollouts and cold replacements).
 5. Measure the production publishing step (Kafka topic, Redis feed), which result ready leaves out.
 
+## A day with one rollout: p99.95 over 12 hours
+
+For a p99.95 SLO evaluated per day, with 12 hours of traffic at 6,000 events/s and one rollout of the 3 aggregator
+pods, `scripts/analysis/daily_slo.py` builds the day from the same runs:
+
+    events over L in the day = steady events over L per second × (43,200 s − 120 s) + rollout events over L
+
+The steady rate comes from a steady run (S1, 300 s), the rollout's events are its impact set in a rolling run (S2,
+120 s horizon as above). The day's p99.95 is the latency L at which this count reaches 0.05 % of the day's events.
+The runs measured 5,960 events per second with a result (the workload leaves a few fragments out and sends some
+twice), so a day has 257.5 million events and **128,700 of them may be slower than the p99.95** (the nominal
+6,000 × 3,600 × 12 = 259.2 million would allow 129,600). Each of the 3 steady runs is paired with each of the 3
+rolling runs of the same variant and build, which gives 9 possible days.
+
+Result ready, events, median [min–max] over the 9 days:
+
+| Variant | Build | p99.95 of the day, ms | Days at or under 500 ms | Late (> 500 ms) per day | Of which the rollout |
+|---|---|---|---|---|---|
+| A1 | JVM | 941 [373–1,827] | 3 of 9 | 317,701 [45,577–1,110,516] | 53,333 [45,577–53,476] |
+| A1 | native | 581 [353–644] | 3 of 9 | 159,852 [28,114–232,541] | 33,484 [28,114–74,150] |
+| A2 | JVM | 481 [334–1,008] | 5 of 9 | 115,964 [39,171–1,354,763] | 40,718 [39,171–63,799] |
+| A2 | native | 406 [381–458] | 9 of 9 | 35,019 [14,160–78,171] | 23,962 [14,160–28,342] |
+| B | JVM | 59 [59–92] | 9 of 9 | 2,956 [2,669–6,205] | 2,806 [2,669–5,918] |
+| B | native | 41 [28–109] | 9 of 9 | 0 [0–14] | 0 [0–14] |
+
+- **The rollout does not decide a daily SLO here.** It uses 41 % (A1), 32 % (A2) and 2 % (B) of the day's 128,700
+  late events on the JVM, and 26 %, 19 % and 0 % natively. Compared with a day of steady state alone
+  (`--per-day 0`), it raises the day's p99.95 by 4–147 ms for A1 and A2 and by at most 5 ms for B.
+- **Steady state decides it.** Scaled to 12 hours, one 300 s steady run of A gives 0 late events per day and
+  another of the same variant over a million (A1 JVM 0–1.06 million, A2 JVM 0–1.29 million), so the same variant
+  passes or fails depending on the run. B's steady runs agree (2 late events in six runs).
+- **B meets a 500 ms p99.95 per day** on both builds in every pairing, with a p99.95 under 110 ms. A2 native meets
+  it in every pairing (at most 458 ms), A2 JVM in 5 of 9, A1 in 3 of 9 on both builds.
+- **Aggregates** (FINAL, including ML inference; 1,970 per second, 42,600 may be slower per day), median JVM /
+  native: A1 1,030 / 636 ms, A2 534 / 467 ms, B 114 / 101 ms. A2 JVM fails in the median on aggregates although
+  it passes on events; A2 native passes in 6 of 9 days.
+- **End to end**, every variant's day is above 500 ms (medians 1.0–2.7 s), from the shared PostgreSQL again; the
+  only exceptions are the events of the three A2 JVM days built on its quietest steady run.
+- One JVM A1 steady run fell 1.7 s behind its send schedule (load not achieved, INCONCLUSIVE). Without it, A1 JVM
+  is 656 ms [373–943], 3 of 6 days at or under 500 ms.
+
+Limits of this calculation:
+
+- **12 hours of steady state are extrapolated from 300 s runs.** That suffices for B, whose runs agree, but not for
+  A, whose runs range from no late event to over a million per day. Steady runs of 1–2 hours per variant and build
+  would settle A (NOT RUN).
+- **The day contains nothing else**: no pod failure, Redis restart or Kafka upgrade. Their late events (the tables
+  above) add to the count; `--per-day` sets how many disruptions of the given runs the day has.
+- The limits listed under "What they do not support" apply as well.
+
 ## Reproduce
 
 Needs each run's `latencies.csv.gz`, which is not committed (about 25 MB per run):
@@ -199,3 +250,8 @@ Needs each run's `latencies.csv.gz`, which is not committed (about 25 MB per run
 
 The same with `results/native/runs` and `results/native/disruption-impact.csv` for the native build. `--horizon 60`
 (or another value) repeats the horizon check; columns prefixed `result_` are the result-ready basis.
+
+The day with one rollout, per build (`--pairs` prints every pairing; `--hours` and `--per-day` change the day):
+
+    ./scripts/analysis/daily_slo.py results/runs/{steady,rolling}-*
+    ./scripts/analysis/daily_slo.py results/native/runs/{steady,rolling}-*
